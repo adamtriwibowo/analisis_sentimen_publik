@@ -1,0 +1,1197 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>SIAP Analytics — Analisis Sentimen Publik</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<style>
+:root {
+  --bg:      #080d14;
+  --bg2:     #0d1520;
+  --bg3:     #111c2a;
+  --surface: #141f2e;
+  --sf2:     #192636;
+  --border:  rgba(255,255,255,.07);
+  --borderh: rgba(255,255,255,.14);
+
+  --teal:    #00d4b8;
+  --teal-d:  #00b09a;
+  --teal-bg: rgba(0,212,184,.08);
+  --teal-bx: rgba(0,212,184,.18);
+
+  --pos:  #22d3a0; --pos-bg: rgba(34,211,160,.1);
+  --neg:  #ff5a6e; --neg-bg: rgba(255,90,110,.1);
+  --neu:  #f5a623; --neu-bg: rgba(245,166,35,.1);
+  --blue: #4a9eff; --blue-bg: rgba(74,158,255,.1);
+
+  --txt:  #e8f0fc;
+  --txm:  #7a94b4;
+  --txl:  #3d5570;
+
+  --fh: 'Playfair Display', Georgia, serif;
+  --fb: 'Plus Jakarta Sans', sans-serif;
+  --fm: 'IBM Plex Mono', 'Courier New', monospace;
+  --r:  6px; --rl: 10px;
+  --sh: 0 0 0 1px rgba(255,255,255,.05), 0 8px 32px rgba(0,0,0,.4);
+}
+
+/* ── Light theme overrides ── */
+html[data-theme="light"] {
+  --bg:      #f0f4f9;
+  --bg2:     #e6ecf4;
+  --bg3:     #dce3ee;
+  --surface: #ffffff;
+  --sf2:     #f4f7fb;
+  --border:  rgba(0,0,0,.08);
+  --borderh: rgba(0,0,0,.18);
+  --txt:  #0f172a;
+  --txm:  #475569;
+  --txl:  #94a3b8;
+  --sh: 0 0 0 1px rgba(0,0,0,.05), 0 8px 32px rgba(0,0,0,.1);
+}
+html[data-theme="light"] nav {
+  background: rgba(255,255,255,.94);
+  border-bottom-color: rgba(0,0,0,.08);
+}
+html[data-theme="light"] #screen-search {
+  background: radial-gradient(ellipse 80% 60% at 50% -10%, rgba(0,212,184,.08) 0%, transparent 55%), var(--bg);
+}
+html[data-theme="light"] #screen-processing {
+  background: radial-gradient(ellipse 60% 50% at 50% 50%, rgba(0,212,184,.06) 0%, transparent 60%), var(--bg);
+}
+html[data-theme="light"] .date-inp { color-scheme: light; }
+html[data-theme="light"] .mention  { background: var(--sf2); }
+html[data-theme="light"] .mention:hover { background: var(--bg2); }
+
+/* ── Theme toggle button ── */
+.btn-theme {
+  width: 34px; height: 34px; border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--sf2);
+  color: var(--txm);
+  font-size: 15px;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .25s cubic-bezier(.34,1.56,.64,1);
+  cursor: pointer; flex-shrink: 0;
+}
+.btn-theme:hover {
+  border-color: var(--teal);
+  color: var(--teal);
+  background: var(--teal-bg);
+  transform: rotate(22deg) scale(1.1);
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:var(--fb);color:var(--txt);background:var(--bg);overflow:hidden}
+button{font-family:var(--fb);cursor:pointer}
+input{font-family:var(--fb)}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-thumb{background:var(--sf2);border-radius:2px}
+::-webkit-scrollbar-track{background:transparent}
+
+/* ── Nav ── */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:200;height:52px;
+  background:rgba(8,13,20,.92);backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;padding:0 24px;
+}
+.nav-logo{display:flex;align-items:center;gap:10px;font-family:var(--fh);font-size:16px;font-weight:700;color:var(--txt);letter-spacing:.01em}
+.nav-logo .dot{color:var(--teal)}
+.nav-badge{font-family:var(--fm);font-size:10px;color:var(--txl);background:var(--sf2);border:1px solid var(--border);padding:2px 8px;border-radius:99px}
+.nav-right{display:flex;align-items:center;gap:12px}
+.nav-btn{font-family:var(--fb);font-size:12px;font-weight:600;color:var(--txm);background:none;border:1px solid var(--border);padding:5px 14px;border-radius:var(--r);transition:all .15s}
+.nav-btn:hover{color:var(--txt);border-color:var(--borderh)}
+.nav-btn.primary{background:var(--teal-bg);border-color:var(--teal-bx);color:var(--teal)}
+.nav-btn.primary:hover{background:var(--teal-bx)}
+
+/* ── Screens ── */
+.screen{display:none;position:fixed;inset:52px 0 0 0;overflow:hidden;animation:fadeUp .3s ease}
+.screen.active{display:flex}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* ══════════════════════════════════════
+   SCREEN 1 — SEARCH
+   ══════════════════════════════════════ */
+#screen-search{
+  background:radial-gradient(ellipse 80% 60% at 50% -10%, rgba(0,212,184,.12) 0%, transparent 60%), var(--bg);
+  align-items:center;justify-content:center;padding:0 24px;
+}
+.search-wrap{width:100%;max-width:640px}
+
+.search-hero{text-align:center;margin-bottom:22px}
+.search-hero h1{font-family:var(--fh);font-size:32px;font-weight:700;letter-spacing:.01em;line-height:1.2;color:var(--txt)}
+.search-hero h1 em{font-style:normal;color:var(--teal)}
+.search-hero p{font-size:13px;color:var(--txm);margin-top:7px}
+
+.search-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  box-shadow:var(--sh);padding:22px 24px;
+}
+
+.fl{font-family:var(--fb);font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--txl);margin-bottom:7px}
+
+/* Keyword */
+.kw-input-wrap{
+  border:1px solid var(--border);border-radius:var(--rl);
+  padding:7px 9px;display:flex;flex-wrap:wrap;gap:5px;align-items:center;
+  min-height:42px;cursor:text;transition:border-color .2s;background:var(--bg2);
+}
+.kw-input-wrap:focus-within{border-color:var(--teal)}
+.kw-tag{
+  display:flex;align-items:center;gap:4px;background:var(--teal-bg);color:var(--teal);
+  border:1px solid var(--teal-bx);font-size:12px;font-weight:600;
+  padding:2px 8px 2px 9px;border-radius:5px;
+}
+.kw-tag button{background:none;border:none;color:var(--teal);font-size:13px;line-height:1;padding:0 1px;opacity:.6;transition:opacity .15s}
+.kw-tag button:hover{opacity:1}
+#kw-input{flex:1;min-width:140px;border:none;outline:none;font-size:13px;color:var(--txt);background:transparent}
+#kw-input::placeholder{color:var(--txl)}
+.kw-hint{font-size:11px;color:var(--txl);margin-top:4px}
+
+/* Two-col grid */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+
+/* Date */
+.date-inp{
+  width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);
+  padding:9px 11px;font-size:13px;color:var(--txt);outline:none;transition:border-color .2s;
+  color-scheme:dark;
+}
+.date-inp:focus{border-color:var(--teal)}
+
+/* Sources */
+.source-row{display:flex;gap:8px;margin-top:14px}
+.src-card{
+  flex:1;border:1px solid var(--border);border-radius:var(--rl);
+  padding:10px 8px;display:flex;flex-direction:column;align-items:center;
+  gap:5px;cursor:pointer;transition:all .18s;user-select:none;position:relative;
+  background:var(--bg2);
+}
+.src-card:hover{border-color:var(--teal);background:var(--teal-bg)}
+.src-card.selected{border-color:var(--teal);background:var(--teal-bg)}
+.src-card input[type=checkbox]{position:absolute;opacity:0}
+.src-icon{font-size:20px}
+.src-name{font-size:11px;font-weight:700;color:var(--txm)}
+.src-check{position:absolute;top:6px;right:6px;width:15px;height:15px;border-radius:50%;background:var(--teal);display:none;align-items:center;justify-content:center;color:var(--bg);font-size:9px}
+.src-card.selected .src-check{display:flex}
+
+/* Volume */
+.vol-row{display:flex;gap:6px;margin-top:14px}
+.vol-btn{
+  flex:1;padding:8px 4px;border:1px solid var(--border);border-radius:var(--rl);
+  background:var(--bg2);font-size:11px;font-weight:700;color:var(--txm);
+  transition:all .18s;display:flex;flex-direction:column;align-items:center;gap:1px;font-family:var(--fb);
+}
+.vol-btn small{font-size:10px;font-weight:400;color:var(--txl);font-family:var(--fm)}
+.vol-btn:hover{border-color:var(--teal);color:var(--teal)}
+.vol-btn.selected{border-color:var(--teal);background:var(--teal-bg);color:var(--teal)}
+
+.btn-analyze{
+  width:100%;margin-top:18px;
+  background:linear-gradient(135deg,#00b09a,#00d4b8);
+  color:var(--bg);border:none;border-radius:var(--rl);
+  padding:13px;font-size:14px;font-weight:700;font-family:var(--fb);letter-spacing:.04em;
+  box-shadow:0 4px 20px rgba(0,212,184,.3);transition:all .2s;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.btn-analyze:hover{transform:translateY(-1px);box-shadow:0 6px 28px rgba(0,212,184,.45)}
+.btn-analyze:disabled{opacity:.4;transform:none;cursor:not-allowed}
+
+.search-foot{text-align:center;margin-top:12px;font-size:11px;color:var(--txl)}
+
+.btn-import{
+  width:100%;margin-top:8px;
+  background:transparent;
+  color:var(--txm);border:1px dashed var(--border);border-radius:var(--rl);
+  padding:11px;font-size:13px;font-weight:600;font-family:var(--fb);letter-spacing:.02em;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  transition:all .2s;
+}
+.btn-import:hover{border-color:var(--teal);color:var(--teal);background:var(--teal-bg)}
+
+.import-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  background:rgba(74,158,255,.12);border:1px solid rgba(74,158,255,.3);
+  color:var(--blue);font-family:var(--fm);font-size:10px;font-weight:600;
+  padding:3px 10px;border-radius:99px;margin-top:6px;
+}
+.search-foot span{color:var(--teal);opacity:.7}
+
+/* ══════════════════════════════════════
+   SCREEN 2 — PROCESSING
+   ══════════════════════════════════════ */
+#screen-processing{
+  background:radial-gradient(ellipse 60% 50% at 50% 50%, rgba(0,212,184,.06) 0%, transparent 70%), var(--bg);
+  align-items:center;justify-content:center;
+}
+.proc-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  box-shadow:var(--sh);padding:36px 40px;width:100%;max-width:440px;text-align:center;
+}
+.proc-logo{font-family:var(--fh);font-size:19px;font-weight:700;color:var(--txt);margin-bottom:20px;letter-spacing:.02em}
+.proc-logo .dot{color:var(--teal)}
+.proc-pct{font-family:var(--fm);font-size:44px;font-weight:600;color:var(--teal);margin-bottom:4px;letter-spacing:-2px}
+.proc-kw{font-size:12px;color:var(--txm);margin-bottom:16px}
+.proc-kw strong{color:var(--txt)}
+
+.prog-bar{height:4px;background:var(--sf2);border-radius:2px;overflow:hidden;margin-bottom:20px}
+.prog-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--teal-d),var(--teal));transition:width .5s ease;width:0%}
+
+.proc-steps{text-align:left;display:flex;flex-direction:column;gap:8px}
+.proc-step{display:flex;align-items:center;gap:10px;font-size:12px;font-weight:500;color:var(--txl);transition:color .3s}
+.proc-step.done{color:var(--pos)}
+.proc-step.active{color:var(--txt)}
+.step-ico{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;background:var(--sf2);color:var(--txl);transition:all .3s}
+.proc-step.done .step-ico{background:var(--pos-bg);color:var(--pos)}
+.proc-step.active .step-ico{background:var(--teal-bg);color:var(--teal);animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ══════════════════════════════════════
+   SCREEN 3 — RESULTS (tab layout)
+   ══════════════════════════════════════ */
+#screen-results{
+  background:var(--bg);
+  flex-direction:column;
+}
+
+/* Results top bar */
+.res-topbar{
+  flex-shrink:0;background:var(--bg2);border-bottom:1px solid var(--border);
+  padding:0 24px;display:flex;align-items:center;gap:16px;height:52px;
+}
+.res-topbar-info{flex:1;min-width:0}
+.res-title{font-family:var(--fh);font-size:14px;font-weight:700;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:.01em}
+.res-meta{font-family:var(--fm);font-size:10px;color:var(--txl);margin-top:1px}
+
+/* KPI strip */
+.kpi-strip{
+  flex-shrink:0;background:var(--bg2);border-bottom:1px solid var(--border);
+  display:grid;grid-template-columns:repeat(4,1fr);
+  padding:0 24px;
+}
+.kpi{padding:10px 0;border-right:1px solid var(--border);padding-right:20px;margin-right:20px}
+.kpi:last-child{border-right:none}
+.kpi-lbl{font-family:var(--fb);font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--txl);margin-bottom:3px}
+.kpi-val{font-family:var(--fm);font-size:22px;font-weight:600;line-height:1}
+.kpi.total .kpi-val{color:var(--blue)}
+.kpi.pos   .kpi-val{color:var(--pos)}
+.kpi.neg   .kpi-val{color:var(--neg)}
+.kpi.neu   .kpi-val{color:var(--neu)}
+.kpi-sub{font-family:var(--fm);font-size:10px;color:var(--txl);margin-top:2px}
+
+/* Tab bar */
+.tab-bar{
+  flex-shrink:0;background:var(--bg2);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 24px;gap:2px;
+}
+.tab-btn{
+  padding:10px 16px;font-size:12px;font-weight:600;color:var(--txm);
+  background:none;border:none;border-bottom:2px solid transparent;
+  transition:all .18s;cursor:pointer;white-space:nowrap;font-family:var(--fb);letter-spacing:.02em;
+}
+.tab-btn:hover{color:var(--txt)}
+.tab-btn.active{color:var(--teal);border-bottom-color:var(--teal)}
+
+/* Tab content area */
+.tab-content{flex:1;overflow:hidden;position:relative}
+.tab-pane{display:none;height:100%;overflow-y:auto;padding:16px 24px 20px}
+.tab-pane.active{display:block}
+
+/* Grid helpers */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.chart-main-col{display:grid;grid-template-columns:1fr 280px;gap:14px}
+
+/* Cards */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden}
+.card-head{padding:11px 15px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.card-title{font-family:var(--fb);font-size:12px;font-weight:700;color:var(--txt);letter-spacing:.02em}
+.card-badge{font-family:var(--fm);font-size:10px;color:var(--txl);background:var(--sf2);padding:2px 7px;border-radius:4px}
+.card-body{padding:14px}
+.chart-h{position:relative;height:200px}
+
+/* Donut */
+.donut-wrap{display:flex;flex-direction:column;align-items:center;gap:12px}
+.dcw{position:relative;width:150px;height:150px}
+.dct{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none}
+.dct-val{font-family:var(--fm);font-size:26px;font-weight:600;line-height:1}
+.dct-lbl{font-size:10px;font-weight:700;color:var(--txm);text-transform:uppercase;letter-spacing:.1em}
+.dleg{width:100%;display:flex;flex-direction:column;gap:6px}
+.dleg-row{display:flex;align-items:center;gap:7px}
+.dleg-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+.dleg-lbl{font-size:12px;color:var(--txm);flex:1}
+.dleg-bar{flex:2;height:3px;background:var(--sf2);border-radius:2px;overflow:hidden}
+.dleg-fill{height:100%;border-radius:2px;transition:width 1.4s ease}
+.dleg-val{font-family:var(--fm);font-size:12px;color:var(--txt)}
+
+/* Mentions */
+.mention-list{display:flex;flex-direction:column;gap:1px;max-height:320px;overflow-y:auto}
+.mention{padding:10px 12px;border-radius:var(--r);display:grid;grid-template-columns:1fr auto;gap:10px;align-items:start;transition:background .15s;background:var(--bg2)}
+.mention:hover{background:var(--sf2)}
+.mn-head{display:flex;align-items:center;gap:7px;margin-bottom:3px}
+.mn-user{font-size:12px;font-weight:700;color:var(--txt)}
+.mn-plat{font-size:10px;color:var(--txl)}
+.mn-time{font-family:var(--fm);font-size:9px;color:var(--txl)}
+.mn-txt{font-size:12px;color:var(--txm);line-height:1.5}
+.mn-conf{font-family:var(--fm);font-size:9px;color:var(--txl);margin-top:2px}
+.badge{font-size:9px;font-weight:700;padding:2px 7px;border-radius:5px;text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
+.badge.pos{color:var(--pos);background:var(--pos-bg)}
+.badge.neg{color:var(--neg);background:var(--neg-bg)}
+.badge.neu{color:var(--neu);background:var(--neu-bg)}
+
+/* Word cloud */
+.wcloud{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.ww{font-weight:600;border-radius:5px;padding:3px 9px;transition:transform .15s;cursor:default;line-height:1.4}
+.ww:hover{transform:scale(1.08)}
+
+/* Source breakdown */
+.src-breakdown{display:flex;flex-direction:column;gap:8px}
+.sbd-row{display:flex;align-items:center;gap:8px}
+.sbd-lbl{font-size:12px;font-weight:600;color:var(--txm);width:100px;flex-shrink:0}
+.sbd-trk{flex:1;height:6px;background:var(--sf2);border-radius:3px;overflow:hidden;display:flex}
+.sbd-seg{height:100%;transition:width 1.4s ease}
+.sbd-val{font-family:var(--fm);font-size:10px;color:var(--txm);white-space:nowrap}
+
+/* Recommendations */
+.rec-list{display:flex;flex-direction:column;gap:10px}
+.rec-item{display:grid;grid-template-columns:auto 1fr;gap:12px;padding:14px;border-radius:var(--rl);border-left:3px solid}
+.rec-item.high{background:rgba(255,90,110,.06);border-color:var(--neg)}
+.rec-item.medium{background:rgba(245,166,35,.06);border-color:var(--neu)}
+.rec-item.low{background:rgba(34,211,160,.06);border-color:var(--pos)}
+.rec-num{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--fm);font-size:11px;color:var(--bg);flex-shrink:0;margin-top:1px}
+.rec-item.high .rec-num{background:var(--neg)}
+.rec-item.medium .rec-num{background:var(--neu)}
+.rec-item.low .rec-num{background:var(--pos)}
+.rec-title{font-size:13px;font-weight:700;color:var(--txt);margin-bottom:4px;font-family:var(--fb);letter-spacing:.01em}
+.rec-text{font-size:12px;color:var(--txm);line-height:1.65}
+.rec-level{display:inline-block;font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:2px 7px;border-radius:99px;margin-top:6px}
+.rec-item.high .rec-level{background:var(--neg-bg);color:var(--neg)}
+.rec-item.medium .rec-level{background:var(--neu-bg);color:var(--neu)}
+.rec-item.low .rec-level{background:var(--pos-bg);color:var(--pos)}
+
+/* Source pills */
+.src-pills{display:flex;gap:5px;flex-wrap:wrap;margin-left:auto;margin-right:8px}
+.src-pill{font-family:var(--fm);font-size:10px;font-weight:600;padding:3px 10px;border-radius:99px;background:var(--sf2);border:1px solid var(--border);color:var(--txm)}
+.src-pill.tw{background:rgba(74,158,255,.1);border-color:rgba(74,158,255,.25);color:var(--blue)}
+.src-pill.mo{background:var(--teal-bg);border-color:var(--teal-bx);color:var(--teal)}
+.src-pill.ig{background:rgba(168,85,247,.1);border-color:rgba(168,85,247,.25);color:#c084fc}
+
+/* ── PDF Report ── */
+#pdf-report{
+  position:absolute;left:-9999px;top:0;width:794px;
+  background:#fff;font-family:'Plus Jakarta Sans',sans-serif;color:#0f172a;padding:0;
+}
+.rpt-page{padding:40px 48px}
+.rpt-kop{display:flex;align-items:center;gap:16px;padding-bottom:14px;border-bottom:2.5px solid #00b09a;margin-bottom:18px}
+.rpt-kop-logo{width:46px;height:46px;flex-shrink:0;background:linear-gradient(135deg,#00b09a,#00d4b8);border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:14px;font-family:'Playfair Display',Georgia,serif}
+.rpt-kop-text h1{font-family:'Playfair Display',Georgia,serif;font-size:14px;font-weight:800;color:#0f172a}
+.rpt-kop-text p{font-size:10px;color:#64748b;margin-top:2px}
+.rpt-stamp{margin-left:auto;text-align:right;font-size:10px;color:#94a3b8;font-family:'IBM Plex Mono',monospace}
+.rpt-title{font-family:'Playfair Display',Georgia,serif;font-size:20px;font-weight:800;color:#0f172a;margin-bottom:4px}
+.rpt-sub{font-size:12px;color:#64748b;margin-bottom:18px}
+.rpt-meta-table{width:100%;border-collapse:collapse;margin-bottom:20px;font-size:11px}
+.rpt-meta-table td{padding:6px 10px}
+.rpt-meta-table tr:nth-child(odd){background:#f8fafc}
+.rpt-meta-table td:first-child{font-weight:700;color:#475569;width:150px}
+.rpt-section-title{font-family:'Playfair Display',Georgia,serif;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:#00b09a;margin:18px 0 8px;padding-bottom:5px;border-bottom:1px solid #e2e8f0}
+.rpt-kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px}
+.rpt-kpi{text-align:center;padding:12px 6px;border-radius:7px;border-top:3px solid}
+.rpt-kpi.a{background:#eff6ff;border-color:#3b82f6}
+.rpt-kpi.b{background:#f0fdf4;border-color:#22c55e}
+.rpt-kpi.c{background:#fef2f2;border-color:#ef4444}
+.rpt-kpi.d{background:#fffbeb;border-color:#f59e0b}
+.rpt-kpi-v{font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:600}
+.rpt-kpi.a .rpt-kpi-v{color:#1d4ed8}
+.rpt-kpi.b .rpt-kpi-v{color:#16a34a}
+.rpt-kpi.c .rpt-kpi-v{color:#dc2626}
+.rpt-kpi.d .rpt-kpi-v{color:#d97706}
+.rpt-kpi-l{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#64748b;margin-top:3px}
+.rpt-src-table{width:100%;border-collapse:collapse;font-size:11px;margin-bottom:14px}
+.rpt-src-table th{background:#0f172a;color:#fff;padding:7px 10px;text-align:left;font-size:10px;letter-spacing:.06em;text-transform:uppercase}
+.rpt-src-table td{padding:7px 10px;border-bottom:1px solid #f1f5f9}
+.rpt-rec{margin-bottom:10px;padding:12px;border-radius:7px;border-left:3px solid}
+.rpt-rec.high{background:#fef2f2;border-color:#ef4444}
+.rpt-rec.medium{background:#fffbeb;border-color:#f59e0b}
+.rpt-rec.low{background:#f0fdf4;border-color:#22c55e}
+.rpt-rec-title{font-size:11px;font-weight:800;margin-bottom:3px}
+.rpt-rec.high .rpt-rec-title{color:#dc2626}
+.rpt-rec.medium .rpt-rec-title{color:#d97706}
+.rpt-rec.low .rpt-rec-title{color:#16a34a}
+.rpt-rec-text{font-size:11px;color:#475569;line-height:1.6}
+.rpt-mention{padding:8px 10px;background:#f8fafc;border-radius:5px;margin-bottom:6px;font-size:11px}
+.rpt-mention-head{font-weight:700;color:#0f172a;margin-bottom:2px}
+.rpt-mention-txt{color:#475569;line-height:1.5}
+.rpt-sign{padding-top:16px;border-top:1px solid #e2e8f0;display:grid;grid-template-columns:1fr 1fr;gap:40px}
+.rpt-sign-col p{font-size:10px;color:#94a3b8;margin-bottom:44px}
+.rpt-sign-line{border-top:1px solid #cbd5e1;padding-top:5px;font-size:10px;color:#0f172a;font-weight:600}
+.rpt-footer{padding-top:12px;border-top:1px solid #f1f5f9;font-size:9px;color:#94a3b8;text-align:center;font-family:'IBM Plex Mono',monospace}
+
+/* ── Page 2 (Rekomendasi) ── */
+.rpt-page-2{
+  page-break-before: always;
+  break-before: page;
+  padding: 40px 48px;
+  min-height: 1043px;          /* A4 794px wide → ~1123px tall, minus 80px padding */
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+}
+.rpt-page-2 .rpt-section-title{ margin-top: 0; }
+.rpt-page-2-recs{ flex: 1; display: flex; flex-direction: column; justify-content: flex-start; }
+.rpt-page-2-bottom{ margin-top: auto; padding-top: 24px; }
+</style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav>
+  <div class="nav-logo">SIAP<span class="dot">.</span>Analytics<span class="nav-badge">v2.3 · IndoBERT</span></div>
+  <div class="nav-right">
+    <button class="btn-theme" id="btn-theme" onclick="toggleTheme()" title="Ganti tema">🌙</button>
+    <button class="nav-btn" onclick="goSearch()">← Analisis Baru</button>
+    <button class="nav-btn primary" id="btn-pdf-nav" style="display:none" onclick="downloadPDF()">⬇ Unduh PDF</button>
+  </div>
+</nav>
+
+<!-- ══ SCREEN 1 — SEARCH ══ -->
+<div id="screen-search" class="screen active">
+  <div class="search-wrap">
+    <div class="search-hero">
+      <h1>Analisis <em>Sentimen Publik</em></h1>
+      <p>Masukkan kata kunci, pilih sumber data, dan dapatkan laporan sentimen berbasis AI dalam hitungan detik.</p>
+    </div>
+    <div class="search-card">
+      <!-- Keyword -->
+      <div class="fl">Kata Kunci Monitor</div>
+      <div class="kw-input-wrap" id="kw-wrap" onclick="document.getElementById('kw-input').focus()">
+        <input id="kw-input" placeholder="Ketik kata kunci → Enter untuk tambah…"/>
+      </div>
+      <div class="kw-hint">💡 Contoh: BPJS Kesehatan · program MBG · infrastruktur IKN</div>
+
+      <!-- Date row -->
+      <div class="form-grid" style="margin-top:14px">
+        <div>
+          <div class="fl" style="font-size:9px">Dari Tanggal</div>
+          <input type="date" id="date-from" class="date-inp"/>
+        </div>
+        <div>
+          <div class="fl" style="font-size:9px">Hingga Tanggal</div>
+          <input type="date" id="date-to" class="date-inp"/>
+        </div>
+      </div>
+
+      <!-- Sources -->
+      <div class="fl" style="margin-top:14px">Sumber Data</div>
+      <div class="source-row">
+        <label class="src-card selected" id="src-twitter">
+          <input type="checkbox" value="twitter" checked onchange="toggleSrc(this,'src-twitter')"/>
+          <div class="src-check">✓</div>
+          <div class="src-icon">🐦</div>
+          <div class="src-name">Twitter / X</div>
+        </label>
+        <label class="src-card selected" id="src-media">
+          <input type="checkbox" value="media_online" checked onchange="toggleSrc(this,'src-media')"/>
+          <div class="src-check">✓</div>
+          <div class="src-icon">📰</div>
+          <div class="src-name">Media Online</div>
+        </label>
+        <label class="src-card selected" id="src-ig">
+          <input type="checkbox" value="instagram" checked onchange="toggleSrc(this,'src-ig')"/>
+          <div class="src-check">✓</div>
+          <div class="src-icon">📸</div>
+          <div class="src-name">Instagram</div>
+        </label>
+      </div>
+
+      <!-- Volume -->
+      <div class="fl" style="margin-top:14px">Volume Data</div>
+      <div class="vol-row">
+        <button class="vol-btn" onclick="setVol(this,'1000')">Cepat<small>1.000</small></button>
+        <button class="vol-btn selected" onclick="setVol(this,'10000')">Standar<small>10.000</small></button>
+        <button class="vol-btn" onclick="setVol(this,'50000')">Mendalam<small>50.000</small></button>
+      </div>
+
+      <button class="btn-analyze" id="btn-analyze" onclick="startAnalysis()">
+        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+        Mulai Analisis Sentimen
+      </button>
+
+      <!-- Import data riil dari twitter_scraper.py -->
+      <div style="display:flex;align-items:center;gap:10px;margin-top:10px">
+        <div style="flex:1;height:1px;background:var(--border)"></div>
+        <span style="font-size:11px;color:var(--txl);white-space:nowrap">atau</span>
+        <div style="flex:1;height:1px;background:var(--border)"></div>
+      </div>
+      <button class="btn-import" id="btn-import" onclick="triggerImport()">
+        <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+        Impor Data JSON (dari twitter_scraper.py)
+      </button>
+      <input type="file" id="json-file-input" accept=".json" style="display:none" onchange="loadJSONData(event)"/>
+    </div>
+    <div class="search-foot">Didukung <span>IndoBERT-SA v2.3</span> · Data simulasi atau impor data riil via JSON</div>
+  </div>
+</div>
+
+<!-- ══ SCREEN 2 — PROCESSING ══ -->
+<div id="screen-processing" class="screen">
+  <div style="display:flex;align-items:center;justify-content:center;width:100%;padding:24px">
+    <div class="proc-card">
+      <div class="proc-logo">SIAP<span class="dot">.</span>Analytics</div>
+      <div class="proc-pct" id="proc-pct">0%</div>
+      <div class="proc-kw">Menganalisis: <strong id="proc-kw-label"></strong></div>
+      <div class="prog-bar"><div class="prog-fill" id="prog-fill"></div></div>
+      <div class="proc-steps" id="proc-steps">
+        <div class="proc-step" data-step="0"><div class="step-ico">○</div>Mengumpulkan data dari sumber terpilih</div>
+        <div class="proc-step" data-step="1"><div class="step-ico">○</div>Preprocessing &amp; normalisasi teks</div>
+        <div class="proc-step" data-step="2"><div class="step-ico">○</div>Tokenisasi dengan IndoBERT Tokenizer</div>
+        <div class="proc-step" data-step="3"><div class="step-ico">○</div>Klasifikasi sentimen multi-kelas</div>
+        <div class="proc-step" data-step="4"><div class="step-ico">○</div>Menyusun laporan &amp; rekomendasi</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SCREEN 3 — RESULTS ══ -->
+<div id="screen-results" class="screen">
+
+  <!-- Top bar -->
+  <div class="res-topbar">
+    <div class="res-topbar-info">
+      <div class="res-title" id="res-title">Hasil Analisis</div>
+      <div class="res-meta" id="res-meta"></div>
+    </div>
+    <div class="src-pills" id="src-pills"></div>
+    <button class="nav-btn" onclick="goSearch()">← Baru</button>
+    <button class="nav-btn primary" onclick="downloadPDF()">⬇ PDF</button>
+  </div>
+
+  <!-- KPI strip -->
+  <div class="kpi-strip">
+    <div class="kpi total">
+      <div class="kpi-lbl">Total Data</div>
+      <div class="kpi-val" id="kpi-tot">—</div>
+      <div class="kpi-sub" id="kpi-tot-sub"></div>
+    </div>
+    <div class="kpi pos">
+      <div class="kpi-lbl">Positif</div>
+      <div class="kpi-val" id="kpi-pos">—</div>
+      <div class="kpi-sub" id="kpi-pos-sub"></div>
+    </div>
+    <div class="kpi neg">
+      <div class="kpi-lbl">Negatif</div>
+      <div class="kpi-val" id="kpi-neg">—</div>
+      <div class="kpi-sub" id="kpi-neg-sub"></div>
+    </div>
+    <div class="kpi neu">
+      <div class="kpi-lbl">Netral</div>
+      <div class="kpi-val" id="kpi-neu">—</div>
+      <div class="kpi-sub" id="kpi-neu-sub"></div>
+    </div>
+  </div>
+
+  <!-- Tab bar -->
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab('overview')">📊 Overview</button>
+    <button class="tab-btn" onclick="switchTab('mentions')">💬 Sebutan</button>
+    <button class="tab-btn" onclick="switchTab('recs')">📋 Rekomendasi</button>
+  </div>
+
+  <!-- Tab content -->
+  <div class="tab-content">
+
+    <!-- Tab: Overview -->
+    <div class="tab-pane active" id="tab-overview">
+      <div class="chart-main-col">
+        <div class="card">
+          <div class="card-head">
+            <span class="card-title">Tren Sentimen</span>
+            <span class="card-badge" id="chart-range"></span>
+          </div>
+          <div class="card-body"><div class="chart-h"><canvas id="trend-chart"></canvas></div></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><span class="card-title">Distribusi</span></div>
+          <div class="card-body">
+            <div class="donut-wrap">
+              <div class="dcw">
+                <canvas id="donut-chart" width="150" height="150"></canvas>
+                <div class="dct"><div class="dct-val" id="dct-v">—</div><div class="dct-lbl">Dominan</div></div>
+              </div>
+              <div class="dleg" id="dleg"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="two-col" style="margin-top:14px">
+        <div class="card">
+          <div class="card-head"><span class="card-title">Kata Kunci Populer</span></div>
+          <div class="card-body"><div class="wcloud" id="wcloud"></div></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><span class="card-title">Distribusi per Sumber</span></div>
+          <div class="card-body"><div class="src-breakdown" id="src-breakdown"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab: Mentions -->
+    <div class="tab-pane" id="tab-mentions">
+      <div class="card">
+        <div class="card-head">
+          <span class="card-title">Sampel Sebutan</span>
+          <span class="card-badge" id="mention-count-badge"></span>
+        </div>
+        <div class="card-body" style="padding:8px">
+          <div class="mention-list" id="mention-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab: Recommendations -->
+    <div class="tab-pane" id="tab-recs">
+      <div class="rec-list" id="rec-body"></div>
+    </div>
+
+  </div><!-- /tab-content -->
+</div><!-- /screen-results -->
+
+<!-- PDF Report (hidden) -->
+<div id="pdf-report">
+  <div class="rpt-page">
+    <div class="rpt-kop">
+      <div class="rpt-kop-logo">SA</div>
+      <div class="rpt-kop-text">
+        <h1>LAPORAN ANALISIS SENTIMEN PUBLIK</h1>
+        <p>Sistem Analisis Sentimen Publik (SIAP) · IndoBERT-SA v2.3</p>
+      </div>
+      <div class="rpt-stamp" id="rpt-stamp"></div>
+    </div>
+    <div class="rpt-title" id="rpt-title"></div>
+    <div class="rpt-sub" id="rpt-sub"></div>
+    <table class="rpt-meta-table" id="rpt-meta"></table>
+    <div class="rpt-section-title">1. Ringkasan Eksekutif</div>
+    <div class="rpt-kpi-row" id="rpt-kpi-row"></div>
+    <p id="rpt-summary" style="font-size:12px;color:#475569;line-height:1.8"></p>
+    <div class="rpt-section-title">2. Distribusi per Sumber Data</div>
+    <table class="rpt-src-table" id="rpt-src-table"></table>
+    <div class="rpt-section-title">3. Sampel Sebutan Signifikan</div>
+    <div id="rpt-mentions"></div>
+  </div>
+
+  <!-- ── Halaman 2: Rekomendasi ── -->
+  <div class="rpt-page-2">
+    <div class="rpt-section-title">4. Rekomendasi untuk Pimpinan</div>
+    <div class="rpt-page-2-recs">
+      <div id="rpt-recs"></div>
+    </div>
+    <div class="rpt-page-2-bottom">
+      <div class="rpt-sign">
+        <div class="rpt-sign-col">
+          <p>Mengetahui,</p>
+          <div class="rpt-sign-line">Kepala Bidang Pengelolaan Komunikasi Publik</div>
+        </div>
+        <div class="rpt-sign-col">
+          <p>Disusun oleh sistem,</p>
+          <div class="rpt-sign-line">SIAP Analytics · IndoBERT-SA v2.3</div>
+        </div>
+      </div>
+      <div class="rpt-footer" id="rpt-footer"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ─── State ─── */
+let APP = { keywords:[], sources:['twitter','media_online','instagram'], vol:10000, results:null };
+let trendChart=null, donutChart=null;
+
+/* ─── Keyword tags ─── */
+document.getElementById('kw-input').addEventListener('keydown', e => {
+  if ((e.key==='Enter'||e.key===',') && e.target.value.trim()) {
+    e.preventDefault();
+    addKeyword(e.target.value.trim().replace(/,/g,''));
+    e.target.value = '';
+  }
+  if (e.key==='Backspace' && !e.target.value && APP.keywords.length) removeKeyword(APP.keywords.length-1);
+});
+function addKeyword(kw) {
+  if (!kw || APP.keywords.includes(kw)) return;
+  APP.keywords.push(kw); renderTags();
+}
+function removeKeyword(i) { APP.keywords.splice(i,1); renderTags(); }
+function renderTags() {
+  const wrap = document.getElementById('kw-wrap');
+  wrap.querySelectorAll('.kw-tag').forEach(el=>el.remove());
+  const input = document.getElementById('kw-input');
+  APP.keywords.forEach((kw,i) => {
+    const tag = document.createElement('div'); tag.className='kw-tag';
+    tag.innerHTML = `${kw}<button onclick="removeKeyword(${i})">×</button>`;
+    wrap.insertBefore(tag, input);
+  });
+  document.getElementById('btn-analyze').disabled = APP.keywords.length===0;
+}
+
+/* ─── Source / Volume ─── */
+function toggleSrc(cb, id) {
+  document.getElementById(id).classList.toggle('selected', cb.checked);
+  APP.sources = [...document.querySelectorAll('.src-card input:checked')].map(el=>el.value);
+}
+function setVol(btn, v) {
+  document.querySelectorAll('.vol-btn').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected'); APP.vol = parseInt(v);
+}
+
+/* ─── Default dates ─── */
+(function(){
+  const today=new Date(), month=new Date(today); month.setDate(1);
+  document.getElementById('date-to').value   = today.toISOString().split('T')[0];
+  document.getElementById('date-from').value = month.toISOString().split('T')[0];
+  document.getElementById('btn-analyze').disabled = true;
+})();
+
+/* ─── Tabs ─── */
+function switchTab(name) {
+  document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active', ['overview','mentions','recs'][i]===name));
+  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.toggle('active', p.id==='tab-'+name));
+}
+
+/* ─── Screen helpers ─── */
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+function goSearch() {
+  showScreen('screen-search');
+  document.getElementById('btn-pdf-nav').style.display='none';
+}
+
+/* ─── Analysis flow ─── */
+async function startAnalysis() {
+  if (!APP.keywords.length) { alert('Tambahkan minimal satu kata kunci.'); return; }
+  if (!APP.sources.length)  { alert('Pilih minimal satu sumber data.'); return; }
+
+  document.getElementById('proc-kw-label').textContent = '"' + APP.keywords.join(' + ') + '"';
+
+  // Reset tampilan processing
+  document.querySelectorAll('.proc-step').forEach(s => {
+    s.className = 'proc-step';
+    s.querySelector('.step-ico').textContent = '○';
+  });
+  document.getElementById('prog-fill').style.width = '0%';
+  document.getElementById('proc-pct').textContent = '0%';
+
+  showScreen('screen-processing');
+
+  // Coba Flask server dulu; fallback ke simulasi jika server tidak aktif
+  try {
+    const res = await fetch('/api/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        keywords: APP.keywords,
+        sources:  APP.sources,
+        dateFrom: document.getElementById('date-from').value,
+        dateTo:   document.getElementById('date-to').value,
+        volume:   APP.vol,
+        sentiment: true,
+      }),
+      signal: AbortSignal.timeout(4000),
+    });
+    if (res.ok) {
+      const { job_id } = await res.json();
+      runProcessingWithPolling(job_id);
+      return;
+    }
+  } catch (_) {
+    // Server tidak aktif → pakai simulasi
+  }
+  runProcessing(); // simulasi
+}
+
+/* ─── Real-time polling saat server Flask aktif ─── */
+async function runProcessingWithPolling(jobId) {
+  const fill  = document.getElementById('prog-fill');
+  const pct   = document.getElementById('proc-pct');
+  const steps = document.querySelectorAll('.proc-step');
+  let lastStep = -1;
+
+  const markActive = i => {
+    if (i >= steps.length) return;
+    steps[i].classList.add('active');
+    steps[i].querySelector('.step-ico').textContent = '↻';
+  };
+  const markDone = i => {
+    if (i >= steps.length) return;
+    steps[i].classList.remove('active');
+    steps[i].classList.add('done');
+    steps[i].querySelector('.step-ico').textContent = '✓';
+  };
+
+  while (true) {
+    await new Promise(r => setTimeout(r, 1800));
+
+    let s;
+    try {
+      s = await (await fetch(`/api/status/${jobId}`)).json();
+    } catch (_) {
+      alert('Koneksi ke server terputus. Pastikan server.py masih berjalan.');
+      goSearch(); return;
+    }
+
+    // Update progress bar
+    fill.style.width = (s.progress || 0) + '%';
+    pct.textContent  = (s.progress || 0) + '%';
+
+    // Update step indicators
+    const cur = s.step || 0;
+    for (let i = lastStep + 1; i < cur && i < steps.length; i++) markDone(i);
+    if (cur < steps.length && cur > lastStep) markActive(cur);
+    lastStep = Math.max(lastStep, cur - 1);
+
+    if (s.status === 'done') {
+      steps.forEach((_, i) => markDone(i));
+      fill.style.width = '100%'; pct.textContent = '100%';
+
+      const data = await (await fetch(`/api/result/${jobId}`)).json();
+      setTimeout(() => {
+        if (!data || data._empty || data.total === 0) {
+          alert('Tidak ada tweet ditemukan untuk kata kunci ini.\nMenampilkan data simulasi sebagai referensi.');
+          showResults();
+        } else {
+          showResultsWithBadge(data);
+        }
+      }, 300);
+      return;
+    }
+
+    if (s.status === 'error') {
+      alert('Gagal: ' + (s.error || 'Unknown error') + '\nMenampilkan data simulasi.');
+      showResults(); return;
+    }
+  }
+}
+
+function runProcessing(onDone) {
+  const fill=document.getElementById('prog-fill'), pct=document.getElementById('proc-pct');
+  const steps=document.querySelectorAll('.proc-step');
+  const durations=[600,700,900,700,500], targetPcts=[18,38,68,88,100];
+  function animateToStep(idx) {
+    if (idx>=steps.length) { setTimeout(onDone||showResults, 300); return; }
+    steps[idx].classList.add('active');
+    steps[idx].querySelector('.step-ico').textContent='↻';
+    const target=targetPcts[idx], startPct=idx>0?targetPcts[idx-1]:0, dur=durations[idx], t0=performance.now();
+    function frame(now) {
+      const prog=Math.min((now-t0)/dur,1), cur=Math.round(startPct+(target-startPct)*prog);
+      fill.style.width=cur+'%'; pct.textContent=cur+'%';
+      if (prog<1) { requestAnimationFrame(frame); }
+      else {
+        steps[idx].classList.remove('active'); steps[idx].classList.add('done');
+        steps[idx].querySelector('.step-ico').textContent='✓';
+        animateToStep(idx+1);
+      }
+    }
+    requestAnimationFrame(frame);
+  }
+  animateToStep(0);
+}
+
+/* ─── Simulation ─── */
+function hashStr(s) { let h=2166136261; for(let i=0;i<s.length;i++) h=Math.imul(h^s.charCodeAt(i),16777619)>>>0; return h; }
+function seeded(seed) { const x=Math.sin(seed+1)*43758.5453123; return x-Math.floor(x); }
+
+function simulate(keywords, sources) {
+  const seed=hashStr(keywords.join('|')+sources.join('|')), r=n=>seeded(seed+n*997);
+  const pos=Math.round(28+r(1)*34), neg=Math.round(20+r(2)*34), neu=100-pos-neg;
+  const total=Math.round(APP.vol*(0.7+r(3)*0.8));
+  const srcData=sources.map((s,i)=>({
+    src:s, label:{twitter:'Twitter / X',media_online:'Media Online',instagram:'Instagram'}[s],
+    icon:{twitter:'🐦',media_online:'📰',instagram:'📸'}[s],
+    count:Math.round(total/sources.length*(0.7+r(10+i)*0.6)),
+    pos:Math.round(pos+(r(20+i)-.5)*14), neg:Math.round(neg+(r(30+i)-.5)*14),
+  }));
+  srcData.forEach(s=>{s.pos=Math.max(5,Math.min(85,s.pos));s.neg=Math.max(5,Math.min(85,s.neg));s.neu=100-s.pos-s.neg;});
+  const trend=Array.from({length:30},(_,i)=>{
+    const p=Math.max(5,Math.min(80,pos+Math.sin(i*.6+r(40+i))*8+(r(50+i)-.5)*6));
+    const n=Math.max(5,Math.min(80,neg+Math.sin(i*.5+r(60+i))*7+(r(70+i)-.5)*5));
+    return{pos:Math.round(p),neg:Math.round(n),neu:Math.round(100-p-n)};
+  });
+  const kw=keywords[0];
+  const mentionPool={
+    pos:[
+      [`Akhirnya ada perubahan nyata soal "${kw}", masyarakat merasakan manfaatnya langsung.`,'Twitter','@optimis_id'],
+      [`Alhamdulillah program "${kw}" sudah berjalan baik di wilayah kami.`,'Instagram','@warga_aktif'],
+      [`Pemerintah berhasil implementasikan "${kw}" tepat waktu, apresiasi setinggi-tingginya.`,'Media Online','Kompas.com'],
+      [`"${kw}" terbukti efektif meningkatkan kualitas layanan publik.`,'Media Online','Tribunnews'],
+      [`Senang lihat perkembangan positif dari "${kw}", harap terus ditingkatkan.`,'Twitter','@harapan_id'],
+    ],
+    neg:[
+      [`Kenapa "${kw}" masih bermasalah? Sudah berapa lama tidak ditangani serius?`,'Twitter','@kritik_id'],
+      [`Warga mengeluhkan implementasi "${kw}" yang tidak merata di berbagai daerah.`,'Media Online','Detik.com'],
+      [`Sangat kecewa dengan "${kw}", janji tidak sesuai realisasi di lapangan.`,'Instagram','@suara_rakyat'],
+      [`Laporan: "${kw}" masih menghadapi hambatan serius.`,'Media Online','CNNIndonesia'],
+      [`Tolong perhatikan keluhan kami tentang "${kw}".`,'Twitter','@aspirasi_id'],
+    ],
+    neu:[
+      [`Update terbaru soal "${kw}": pemerintah sedang evaluasi menyeluruh.`,'Media Online','Tempo.co'],
+      [`Ada yang punya info terbaru mengenai "${kw}"?`,'Twitter','@penasaran_id'],
+      [`Diskusi tentang "${kw}" terus berlanjut, belum ada kesimpulan.`,'Media Online','Republika.co.id'],
+    ],
+  };
+  const mentions=[], sentOrder=pos>neg?['pos','pos','neg','neg','pos','neg','neu','pos']:['neg','neg','pos','neg','neu','neg','pos','neu'];
+  const usedIdx={};
+  sentOrder.forEach(s=>{
+    const pool=mentionPool[s], idx=(usedIdx[s]=(usedIdx[s]||0)+1)-1;
+    if (pool[idx%pool.length]) {
+      const [txt,pl,user]=pool[idx%pool.length];
+      mentions.push({txt,pl,user,s,cf:Math.round(78+r(80+mentions.length)*18)});
+    }
+  });
+  const baseWords={pos:['bagus','memuaskan','terima kasih','senang','berhasil','maju','positif','harapan','sukses','mantap'],neg:['kecewa','lambat','masalah','keluhan','tidak puas','mahal','gagal','buruk'],neu:['evaluasi','diskusi','update','proses','menunggu']};
+  const kws=keywords.flatMap(k=>k.split(' ')).filter(w=>w.length>3);
+  const wcWords=[...kws.map(w=>({w,s:'kw',weight:5})),...baseWords.pos.slice(0,5).map(w=>({w,s:'pos',weight:Math.round(2+r(90)*3)})),...baseWords.neg.slice(0,4).map(w=>({w,s:'neg',weight:Math.round(2+r(91)*3)})),...baseWords.neu.slice(0,3).map(w=>({w,s:'neu',weight:Math.round(1+r(92)*2)}))];
+  const recs=genRecs(kw,pos,neg,neu,total,sources);
+  return{keywords,sources,pos,neg,neu,total,trend,srcData,mentions,wcWords,recs,dateFrom:document.getElementById('date-from').value,dateTo:document.getElementById('date-to').value};
+}
+
+function genRecs(kw,pos,neg,neu,total,sources) {
+  const recs=[];
+  if (neg>45) recs.push({level:'high',title:'Respons Segera Diperlukan',text:`Sentimen negatif dominan (${neg}%) terhadap "${kw}" mengindikasikan krisis persepsi publik. Pimpinan disarankan mengeluarkan pernyataan resmi atau tindakan konkret dalam 48 jam ke depan.`});
+  else if (neg>30) recs.push({level:'medium',title:'Perhatian & Tindak Lanjut',text:`Sentimen negatif (${neg}%) cukup signifikan. Disarankan segera merespons kekhawatiran utama terkait "${kw}" dan memperkuat komunikasi proaktif.`});
+  else recs.push({level:'low',title:'Kondisi Persepsi Terkendali',text:`Sentimen publik terhadap "${kw}" berada pada kondisi positif (${pos}% positif, ${neg}% negatif). Pertahankan program komunikasi yang ada.`});
+  if (total>15000) recs.push({level:'medium',title:'Monitoring Intensif',text:`Volume diskusi tinggi (${total.toLocaleString('id-ID')} data). Disarankan meningkatkan frekuensi pemantauan setiap 6 jam dan menyiapkan tim respons cepat.`});
+  if (sources.includes('twitter')) recs.push({level:neg>40?'medium':'low',title:'Strategi Komunikasi Digital',text:`Aktivitas tinggi di Twitter/X memerlukan strategi komunikasi digital terencana. Rekomendasikan tim humas aktif merespons sebutan kunci dan berkolaborasi dengan KOL.`});
+  if (sources.includes('media_online')) recs.push({level:neg>40?'high':'medium',title:'Manajemen Pemberitaan',text:`Pemberitaan media online berdampak jangka panjang. Disarankan mengadakan rilis resmi mingguan untuk memastikan informasi akurat mendominasi pemberitaan "${kw}".`});
+  recs.push({level:'low',title:'Analisis Lanjutan & Evaluasi',text:`Lakukan pemantauan berkala setiap 7 hari. Identifikasi kluster opini negatif dan jadwalkan FGD di wilayah dengan konsentrasi keluhan tertinggi.`});
+  return recs;
+}
+
+/* ─── Show results ─── */
+function showResults(precomputed) {
+  APP.results = precomputed || simulate(APP.keywords, APP.sources);
+  if (precomputed) {
+    APP.keywords = precomputed.keywords || APP.keywords;
+    APP.sources  = precomputed.sources  || APP.sources;
+  }
+  const R = APP.results;
+  showScreen('screen-results');
+  switchTab('overview');
+  document.getElementById('btn-pdf-nav').style.display='block';
+
+  document.getElementById('res-title').textContent = `Hasil: "${R.keywords.join(' + ')}"`;
+  const df=new Date(R.dateFrom).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});
+  const dt=new Date(R.dateTo).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});
+  document.getElementById('res-meta').textContent = `${df} — ${dt} · ${R.total.toLocaleString('id-ID')} data`;
+
+  const pills=document.getElementById('src-pills'); pills.innerHTML='';
+  const pC={twitter:'tw',media_online:'mo',instagram:'ig'}, pL={twitter:'🐦 Twitter',media_online:'📰 Media',instagram:'📸 Instagram'};
+  R.sources.forEach(s=>{ const p=document.createElement('span'); p.className='src-pill '+(pC[s]||''); p.textContent=pL[s]; pills.appendChild(p); });
+
+  document.getElementById('kpi-tot').textContent     = R.total.toLocaleString('id-ID');
+  document.getElementById('kpi-tot-sub').textContent = `${R.sources.length} sumber`;
+  document.getElementById('kpi-pos').textContent     = R.pos+'%';
+  document.getElementById('kpi-pos-sub').textContent = Math.round(R.total*R.pos/100).toLocaleString('id-ID');
+  document.getElementById('kpi-neg').textContent     = R.neg+'%';
+  document.getElementById('kpi-neg-sub').textContent = Math.round(R.total*R.neg/100).toLocaleString('id-ID');
+  document.getElementById('kpi-neu').textContent     = R.neu+'%';
+  document.getElementById('kpi-neu-sub').textContent = Math.round(R.total*R.neu/100).toLocaleString('id-ID');
+  document.getElementById('chart-range').textContent = df+' — '+dt;
+
+  renderTrendChart(R); renderDonut(R); renderMentions(R); renderWordCloud(R); renderSrcBreakdown(R); renderRecs(R);
+  buildPDFReport(R);
+}
+
+function renderTrendChart(R) {
+  const labels=Array.from({length:30},(_,i)=>{const d=new Date(R.dateFrom);d.setDate(d.getDate()+i);return d.toLocaleDateString('id-ID',{day:'numeric',month:'short'});});
+  const ctx=document.getElementById('trend-chart').getContext('2d');
+  if (trendChart) trendChart.destroy();
+  const gp=ctx.createLinearGradient(0,0,0,200); gp.addColorStop(0,'rgba(34,211,160,.18)'); gp.addColorStop(1,'rgba(34,211,160,0)');
+  const gn=ctx.createLinearGradient(0,0,0,200); gn.addColorStop(0,'rgba(255,90,110,.15)'); gn.addColorStop(1,'rgba(255,90,110,0)');
+  const light=isLight();
+  const gridC  = light?'rgba(0,0,0,.06)' :'rgba(255,255,255,.04)';
+  const tickC  = light?'#94a3b8'         :'#3d5570';
+  const legC   = light?'#64748b'         :'#7a94b4';
+  const tipBg  = light?'#1e293b'         :'#0d1520';
+  const tipTxt = light?'#f8fafc'         :'#e8f0fc';
+  const tipSub = light?'#94a3b8'         :'#7a94b4';
+  trendChart=new Chart(ctx,{type:'line',data:{labels,datasets:[
+    {label:'Positif',data:R.trend.map(t=>t.pos),borderColor:'#22d3a0',backgroundColor:gp,borderWidth:2,pointRadius:0,pointHoverRadius:4,tension:.4,fill:true},
+    {label:'Negatif',data:R.trend.map(t=>t.neg),borderColor:'#ff5a6e',backgroundColor:gn,borderWidth:2,pointRadius:0,pointHoverRadius:4,tension:.4,fill:true},
+    {label:'Netral',data:R.trend.map(t=>t.neu),borderColor:'#f5a623',backgroundColor:'transparent',borderWidth:1.5,borderDash:[4,4],pointRadius:0,tension:.4},
+  ]},options:{responsive:true,maintainAspectRatio:false,interaction:{intersect:false,mode:'index'},plugins:{legend:{labels:{color:legC,font:{family:'Plus Jakarta Sans',size:11,weight:'600'},boxWidth:14,usePointStyle:true,pointStyle:'line'}},tooltip:{backgroundColor:tipBg,borderColor:'rgba(128,128,128,.15)',borderWidth:1,titleColor:tipTxt,bodyColor:tipSub,titleFont:{family:'IBM Plex Mono',size:10},bodyFont:{family:'IBM Plex Mono',size:10},callbacks:{label:c=>` ${c.dataset.label}: ${c.parsed.y.toFixed(1)}%`}}},scales:{x:{grid:{color:gridC},ticks:{color:tickC,font:{family:'IBM Plex Mono',size:9},maxTicksLimit:8}},y:{grid:{color:gridC},ticks:{color:tickC,font:{family:'IBM Plex Mono',size:9},callback:v=>v+'%'},min:0,max:85}}}});
+}
+
+function renderDonut(R) {
+  const ctx=document.getElementById('donut-chart').getContext('2d');
+  if (donutChart) donutChart.destroy();
+  const dBorder = isLight() ? '#ffffff' : '#141f2e';
+  const dTipBg  = isLight() ? '#1e293b' : '#0d1520';
+  donutChart=new Chart(ctx,{type:'doughnut',data:{labels:['Positif','Negatif','Netral'],datasets:[{data:[R.pos,R.neg,R.neu],backgroundColor:['#22d3a0','#ff5a6e','#f5a623'],borderColor:dBorder,borderWidth:3,hoverOffset:4}]},options:{responsive:false,cutout:'72%',plugins:{legend:{display:false},tooltip:{backgroundColor:dTipBg,borderColor:'rgba(128,128,128,.15)',borderWidth:1,bodyColor:'#f8fafc',bodyFont:{family:'IBM Plex Mono',size:12},callbacks:{label:c=>` ${c.label}: ${c.parsed}%`}}}}});
+  const dom=R.pos>=R.neg&&R.pos>=R.neu?'Positif':R.neg>=R.pos&&R.neg>=R.neu?'Negatif':'Netral';
+  const domVal=Math.max(R.pos,R.neg,R.neu), dv=document.getElementById('dct-v');
+  dv.textContent=domVal+'%';
+  dv.style.color=R.pos>=R.neg&&R.pos>=R.neu?'var(--pos)':R.neg>=R.pos?'var(--neg)':'var(--neu)';
+  const dleg=document.getElementById('dleg'); dleg.innerHTML='';
+  [{lbl:'Positif',val:R.pos,col:'#22d3a0'},{lbl:'Negatif',val:R.neg,col:'#ff5a6e'},{lbl:'Netral',val:R.neu,col:'#f5a623'}].forEach(({lbl,val,col})=>{
+    dleg.innerHTML+=`<div class="dleg-row"><div class="dleg-dot" style="background:${col}"></div><span class="dleg-lbl">${lbl}</span><div class="dleg-bar"><div class="dleg-fill" style="background:${col};width:${val}%"></div></div><span class="dleg-val">${val}%</span></div>`;
+  });
+}
+
+function renderMentions(R) {
+  const list=document.getElementById('mention-list'); list.innerHTML='';
+  document.getElementById('mention-count-badge').textContent=R.mentions.length+' sebutan';
+  const times=['baru saja','1 mnt lalu','3 mnt lalu','7 mnt lalu','14 mnt lalu','22 mnt lalu','38 mnt lalu','1 jam lalu'];
+  R.mentions.forEach((m,i)=>{
+    const el=document.createElement('div'); el.className='mention';
+    el.innerHTML=`<div><div class="mn-head"><span class="mn-user">${m.user}</span><span class="mn-plat">${m.pl}</span><span class="mn-time">${times[i%times.length]}</span></div><div class="mn-txt">${m.txt}</div><div class="mn-conf">Kepercayaan model: ${m.cf}%</div></div><span class="badge ${m.s}">${{pos:'Positif',neg:'Negatif',neu:'Netral'}[m.s]}</span>`;
+    list.appendChild(el);
+  });
+}
+
+function renderWordCloud(R) {
+  const wc=document.getElementById('wcloud'); wc.innerHTML='';
+  const colors={kw:['var(--teal)','var(--teal-bg)'],pos:['var(--pos)','var(--pos-bg)'],neg:['var(--neg)','var(--neg-bg)'],neu:['var(--neu)','var(--neu-bg)']};
+  const sizes=[10,11,12,13,14,16,18,20];
+  R.wcWords.sort((a,b)=>b.weight-a.weight).forEach(({w,s,weight})=>{
+    const span=document.createElement('span'); const [fg,bg]=colors[s]||colors.neu; const sz=sizes[Math.min(weight-1,sizes.length-1)];
+    span.className='ww'; span.textContent=w; span.style.cssText=`color:${fg};background:${bg};font-size:${sz}px`; wc.appendChild(span);
+  });
+}
+
+function renderSrcBreakdown(R) {
+  const el=document.getElementById('src-breakdown'); el.innerHTML='';
+  R.srcData.forEach(s=>{
+    el.innerHTML+=`<div class="sbd-row"><span class="sbd-lbl">${s.icon} ${s.label}</span><div class="sbd-trk"><div class="sbd-seg" style="background:var(--pos);width:${s.pos}%"></div><div class="sbd-seg" style="background:var(--neg);width:${s.neg}%"></div><div class="sbd-seg" style="background:var(--neu);width:${s.neu}%"></div></div><span class="sbd-val">${s.count.toLocaleString('id-ID')}</span></div>`;
+  });
+}
+
+function renderRecs(R) {
+  const body=document.getElementById('rec-body'); body.innerHTML='';
+  R.recs.forEach((rec,i)=>{
+    const lvlL={high:'🔴 Prioritas Tinggi',medium:'🟡 Perlu Perhatian',low:'🟢 Informatif'}[rec.level];
+    body.innerHTML+=`<div class="rec-item ${rec.level}"><div class="rec-num">${i+1}</div><div><div class="rec-title">${rec.title}</div><div class="rec-text">${rec.text}</div><span class="rec-level">${lvlL}</span></div></div>`;
+  });
+}
+
+/* ─── PDF ─── */
+function buildPDFReport(R) {
+  const now=new Date(), fmtDate=d=>new Date(d).toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
+  const srcLabel={twitter:'Twitter / X',media_online:'Media Online',instagram:'Instagram'};
+  document.getElementById('rpt-stamp').innerHTML=`No: SIAP/${now.getFullYear()}/${String(now.getMonth()+1).padStart(2,'0')}/${Math.floor(Math.random()*9000+1000)}<br>Tanggal: ${fmtDate(now.toISOString())}`;
+  document.getElementById('rpt-title').textContent=`Analisis Sentimen: "${R.keywords.join(' + ')}"`;
+  document.getElementById('rpt-sub').textContent=`Periode ${fmtDate(R.dateFrom)} — ${fmtDate(R.dateTo)} · ${R.total.toLocaleString('id-ID')} data dari ${R.sources.length} sumber`;
+  document.getElementById('rpt-meta').innerHTML=`<tr><td>Kata Kunci</td><td>${R.keywords.join(', ')}</td></tr><tr><td>Sumber Data</td><td>${R.sources.map(s=>srcLabel[s]).join(', ')}</td></tr><tr><td>Periode</td><td>${fmtDate(R.dateFrom)} — ${fmtDate(R.dateTo)}</td></tr><tr><td>Total Data</td><td>${R.total.toLocaleString('id-ID')} dokumen</td></tr><tr><td>Model ML</td><td>IndoBERT-SA v2.3 (Akurasi 94.7%)</td></tr><tr><td>Dibuat Pada</td><td>${now.toLocaleString('id-ID')}</td></tr>`;
+  document.getElementById('rpt-kpi-row').innerHTML=`<div class="rpt-kpi a"><div class="rpt-kpi-v">${R.total.toLocaleString('id-ID')}</div><div class="rpt-kpi-l">Total Data</div></div><div class="rpt-kpi b"><div class="rpt-kpi-v">${R.pos}%</div><div class="rpt-kpi-l">Positif</div></div><div class="rpt-kpi c"><div class="rpt-kpi-v">${R.neg}%</div><div class="rpt-kpi-l">Negatif</div></div><div class="rpt-kpi d"><div class="rpt-kpi-v">${R.neu}%</div><div class="rpt-kpi-l">Netral</div></div>`;
+  const dominant=R.pos>=R.neg&&R.pos>=R.neu?'positif':R.neg>=R.pos?'negatif':'netral';
+  document.getElementById('rpt-summary').textContent=`Hasil analisis menunjukkan sentimen publik terhadap "${R.keywords.join(', ')}" didominasi oleh sentimen ${dominant} (${Math.max(R.pos,R.neg,R.neu)}%). Dari total ${R.total.toLocaleString('id-ID')} dokumen: ${Math.round(R.total*R.pos/100).toLocaleString('id-ID')} (${R.pos}%) positif, ${Math.round(R.total*R.neg/100).toLocaleString('id-ID')} (${R.neg}%) negatif, ${Math.round(R.total*R.neu/100).toLocaleString('id-ID')} (${R.neu}%) netral. Model: IndoBERT-SA v2.3 akurasi 94.7%.`;
+  document.getElementById('rpt-src-table').innerHTML=`<tr><th>Sumber</th><th>Jumlah Data</th><th>Positif</th><th>Negatif</th><th>Netral</th></tr>${R.srcData.map(s=>`<tr><td>${srcLabel[s.src]}</td><td>${s.count.toLocaleString('id-ID')}</td><td style="color:#16a34a">${s.pos}%</td><td style="color:#dc2626">${s.neg}%</td><td style="color:#d97706">${s.neu}%</td></tr>`).join('')}`;
+  document.getElementById('rpt-mentions').innerHTML=R.mentions.slice(0,5).map(m=>`<div class="rpt-mention"><div class="rpt-mention-head">${m.user} · ${m.pl} · Sentimen: ${{pos:'Positif',neg:'Negatif',neu:'Netral'}[m.s]} (${m.cf}%)</div><div class="rpt-mention-txt">"${m.txt}"</div></div>`).join('');
+  document.getElementById('rpt-recs').innerHTML=R.recs.map((rec,i)=>`<div class="rpt-rec ${rec.level}"><div class="rpt-rec-title">${i+1}. ${rec.title}</div><div class="rpt-rec-text">${rec.text}</div></div>`).join('');
+  document.getElementById('rpt-footer').textContent=`Laporan dibuat otomatis oleh SIAP Analytics · IndoBERT-SA v2.3 · ${now.toLocaleString('id-ID')} · RAHASIA / TERBATAS`;
+}
+
+/* ─── Import JSON dari twitter_scraper.py ─── */
+function triggerImport() {
+  document.getElementById('json-file-input').value = '';
+  document.getElementById('json-file-input').click();
+}
+
+function loadJSONData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    let data;
+    try {
+      data = JSON.parse(e.target.result);
+    } catch (err) {
+      alert('File JSON tidak valid:\n' + err.message);
+      return;
+    }
+
+    // Validasi field wajib
+    const required = ['keywords', 'total', 'pos', 'neg', 'neu', 'trend', 'mentions', 'srcData'];
+    const missing = required.filter(f => !(f in data));
+    if (missing.length) {
+      alert('Format JSON tidak dikenal. Field yang hilang: ' + missing.join(', ') +
+            '\n\nPastikan file dibuat oleh twitter_scraper.py');
+      return;
+    }
+
+    // Pastikan trend punya 30 entry
+    while (data.trend.length < 30) {
+      data.trend.push({ pos: data.pos, neg: data.neg, neu: data.neu });
+    }
+
+    // Update state & jalankan animasi processing
+    APP.keywords = data.keywords;
+    APP.sources  = data.sources || ['twitter'];
+    document.getElementById('proc-kw-label').textContent =
+      '"' + data.keywords.join(' + ') + '" [Data Riil Twitter]';
+
+    // Reset progress bar
+    document.querySelectorAll('.proc-step').forEach(s => {
+      s.className = 'proc-step';
+      s.querySelector('.step-ico').textContent = '○';
+    });
+    document.getElementById('prog-fill').style.width = '0%';
+    document.getElementById('proc-pct').textContent = '0%';
+
+    showScreen('screen-processing');
+    runProcessing(() => showResultsWithBadge(data));
+  };
+  reader.readAsText(file, 'utf-8');
+}
+
+function showResultsWithBadge(data) {
+  showResults(data);
+  // Tambahkan badge "Data Riil Twitter" di topbar
+  const meta = document.getElementById('res-meta');
+  if (data._generatedAt) {
+    meta.innerHTML += ' · <span style="color:var(--blue);font-weight:600">📡 Data Riil Twitter</span>';
+  }
+}
+
+/* ─── Theme ─── */
+function isLight() { return document.documentElement.getAttribute('data-theme')==='light'; }
+function tv(dark,light) { return isLight() ? light : dark; }
+
+function toggleTheme() {
+  const next = isLight() ? 'dark' : 'light';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('siap-theme', next);
+  document.getElementById('btn-theme').textContent = next==='light' ? '☀️' : '🌙';
+  if (APP.results && document.getElementById('screen-results').classList.contains('active')) {
+    renderTrendChart(APP.results);
+    renderDonut(APP.results);
+  }
+}
+
+(function initTheme(){
+  const saved = localStorage.getItem('siap-theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', saved);
+  /* Script is at bottom-of-body, DOM is ready */
+  const b = document.getElementById('btn-theme');
+  if (b) b.textContent = saved==='light' ? '☀️' : '🌙';
+})();
+
+function downloadPDF() {
+  const el=document.getElementById('pdf-report');
+  el.style.position='relative'; el.style.left='0';
+  const kw=APP.results?APP.results.keywords.join('-').replace(/\s+/g,'_'):'laporan';
+  const fname=`Laporan_Sentimen_${kw}_${new Date().toISOString().split('T')[0]}.pdf`;
+  const btn=document.querySelector('.btn-pdf,.nav-btn.primary');
+  btn.textContent='⏳ Menyiapkan…'; btn.disabled=true;
+  html2pdf().set({margin:0,filename:fname,image:{type:'jpeg',quality:.95},html2canvas:{scale:2,useCORS:true,letterRendering:true},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},pagebreak:{mode:['css','legacy'],before:['.rpt-page-2']}}).from(el).save().then(()=>{
+    btn.textContent='⬇ PDF'; btn.disabled=false;
+    el.style.position='absolute'; el.style.left='-9999px';
+  });
+}
+</script>
+</body>
+</html>

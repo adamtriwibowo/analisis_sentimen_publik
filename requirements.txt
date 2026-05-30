@@ -1,0 +1,15 @@
+# SIAP Analytics — Dependencies
+# Install: pip install -r requirements.txt
+
+# Web server
+flask>=3.0.0
+
+# Scraper Twitter (tanpa API berbayar)
+twscrape>=0.14.0
+
+# Analisis sentimen IndoBERT
+transformers>=4.35.0
+torch>=2.0.0
+
+# Utilitas
+tqdm

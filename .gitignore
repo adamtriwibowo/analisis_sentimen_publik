@@ -1,0 +1,15 @@
+# Kredensial & database akun Twitter
+accounts.db
+
+# Output scraping (data mentah)
+*.json
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.env
+
+# Cache HuggingFace / model
+*.bin
+*.safetensors
