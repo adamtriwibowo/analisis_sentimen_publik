@@ -4,8 +4,16 @@
 # Web server
 flask>=3.0.0
 
-# Scraper Twitter (tanpa API berbayar)
+# Scraper Twitter/X
 twscrape>=0.14.0
+
+# Scraper Media Online
+feedparser>=6.0.0
+beautifulsoup4>=4.12.0
+requests>=2.31.0
+
+# Scraper Instagram (opsional — install manual jika digunakan)
+# pip install instagrapi
 
 # Analisis sentimen IndoBERT
 transformers>=4.35.0

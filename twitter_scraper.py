@@ -289,17 +289,37 @@ def compute_siap_output(tweets: list, keywords: list, date_from: str, date_to: s
         else:
             trend.append({"pos": pos_pct, "neg": neg_pct, "neu": neu_pct})
 
-    src_data = [{
-        "src":   "twitter",
-        "label": "Twitter / X",
-        "icon":  "Twitter",
-        "count": total,
-        "pos":   pos_pct,
-        "neg":   neg_pct,
-        "neu":   neu_pct,
-    }]
+    # ── Source breakdown (multi-source) ───────────────────────────────────────
+    SRC_META = {
+        "twitter":     ("Twitter / X",  "X"),
+        "media_online": ("Media Online", "Media"),
+        "instagram":   ("Instagram",     "IG"),
+    }
+    sources_present = sorted(set(t.get("source", "twitter") for t in tweets))
+    src_data = []
+    for src in sources_present:
+        src_tweets = [t for t in tweets if t.get("source") == src]
+        if not src_tweets:
+            continue
+        sc  = Counter(t.get("sentiment", "neu") for t in src_tweets)
+        st  = max(len(src_tweets), 1)
+        lbl, icon = SRC_META.get(src, (src, src))
+        src_data.append({
+            "src":   src,
+            "label": lbl,
+            "icon":  icon,
+            "count": len(src_tweets),
+            "pos":   round(sc.get("pos", 0) / st * 100),
+            "neg":   round(sc.get("neg", 0) / st * 100),
+            "neu":   round(sc.get("neu", 0) / st * 100),
+        })
 
-    # Mentions sample
+    # ── Mentions sample (campur semua sumber) ──────────────────────────────────
+    SRC_LABEL = {
+        "twitter":     "Twitter / X",
+        "media_online": "Media Online",
+        "instagram":   "Instagram",
+    }
     sorted_tw = sorted(tweets, key=lambda t: t["likes"] + t["retweets"] * 3, reverse=True)
     mentions = []
     used_sentiments = Counter()
@@ -311,7 +331,7 @@ def compute_siap_output(tweets: list, keywords: list, date_from: str, date_to: s
                 text_display = text_display[:197] + "..."
             mentions.append({
                 "txt":  text_display,
-                "pl":   "Twitter / X",
+                "pl":   SRC_LABEL.get(t.get("source", "twitter"), "Media"),
                 "user": t["user"],
                 "s":    s,
                 "cf":   t.get("confidence", 80),

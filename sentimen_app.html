@@ -175,7 +175,8 @@ nav{
 .src-card:hover{border-color:var(--teal);background:var(--teal-bg)}
 .src-card.selected{border-color:var(--teal);background:var(--teal-bg)}
 .src-card input[type=checkbox]{position:absolute;opacity:0}
-.src-icon{font-size:20px}
+.src-icon{width:26px;height:26px;display:flex;align-items:center;justify-content:center}
+.src-icon svg{width:22px;height:22px;display:block}
 .src-name{font-size:11px;font-weight:700;color:var(--txm)}
 .src-check{position:absolute;top:6px;right:6px;width:15px;height:15px;border-radius:50%;background:var(--teal);display:none;align-items:center;justify-content:center;color:var(--bg);font-size:9px}
 .src-card.selected .src-check{display:flex}
@@ -491,19 +492,44 @@ nav{
         <label class="src-card selected" id="src-twitter">
           <input type="checkbox" value="twitter" checked onchange="toggleSrc(this,'src-twitter')"/>
           <div class="src-check">✓</div>
-          <div class="src-icon">🐦</div>
+          <div class="src-icon">
+            <svg viewBox="0 0 24 24" fill="currentColor" style="color:#e8f0fc">
+              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+            </svg>
+          </div>
           <div class="src-name">Twitter / X</div>
         </label>
         <label class="src-card selected" id="src-media">
           <input type="checkbox" value="media_online" checked onchange="toggleSrc(this,'src-media')"/>
           <div class="src-check">✓</div>
-          <div class="src-icon">📰</div>
+          <div class="src-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="color:#7a94b4">
+              <path d="M4 4h16a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z" stroke-linejoin="round"/>
+              <path d="M7 8h10M7 12h10M7 16h6" stroke-linecap="round"/>
+              <rect x="3" y="4" width="4" height="7" rx="0.5" fill="currentColor" opacity="0.25"/>
+            </svg>
+          </div>
           <div class="src-name">Media Online</div>
         </label>
         <label class="src-card selected" id="src-ig">
           <input type="checkbox" value="instagram" checked onchange="toggleSrc(this,'src-ig')"/>
           <div class="src-check">✓</div>
-          <div class="src-icon">📸</div>
+          <div class="src-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8">
+              <defs>
+                <linearGradient id="ig-grad" x1="0%" y1="100%" x2="100%" y2="0%">
+                  <stop offset="0%"   stop-color="#f09433"/>
+                  <stop offset="25%"  stop-color="#e6683c"/>
+                  <stop offset="50%"  stop-color="#dc2743"/>
+                  <stop offset="75%"  stop-color="#cc2366"/>
+                  <stop offset="100%" stop-color="#bc1888"/>
+                </linearGradient>
+              </defs>
+              <rect x="2" y="2" width="20" height="20" rx="5" ry="5" stroke="url(#ig-grad)"/>
+              <circle cx="12" cy="12" r="5" stroke="url(#ig-grad)"/>
+              <circle cx="17.5" cy="6.5" r="1.2" fill="url(#ig-grad)" stroke="none"/>
+            </svg>
+          </div>
           <div class="src-name">Instagram</div>
         </label>
       </div>
@@ -910,7 +936,7 @@ function simulate(keywords, sources) {
   const total=Math.round(APP.vol*(0.7+r(3)*0.8));
   const srcData=sources.map((s,i)=>({
     src:s, label:{twitter:'Twitter / X',media_online:'Media Online',instagram:'Instagram'}[s],
-    icon:{twitter:'🐦',media_online:'📰',instagram:'📸'}[s],
+    icon:{twitter:'X',media_online:'Media',instagram:'IG'}[s],
     count:Math.round(total/sources.length*(0.7+r(10+i)*0.6)),
     pos:Math.round(pos+(r(20+i)-.5)*14), neg:Math.round(neg+(r(30+i)-.5)*14),
   }));
@@ -988,8 +1014,14 @@ function showResults(precomputed) {
   document.getElementById('res-meta').textContent = `${df} — ${dt} · ${R.total.toLocaleString('id-ID')} data`;
 
   const pills=document.getElementById('src-pills'); pills.innerHTML='';
-  const pC={twitter:'tw',media_online:'mo',instagram:'ig'}, pL={twitter:'🐦 Twitter',media_online:'📰 Media',instagram:'📸 Instagram'};
-  R.sources.forEach(s=>{ const p=document.createElement('span'); p.className='src-pill '+(pC[s]||''); p.textContent=pL[s]; pills.appendChild(p); });
+  const pC={twitter:'tw',media_online:'mo',instagram:'ig'};
+  const pSVG={
+    twitter:`<svg viewBox="0 0 24 24" fill="currentColor" width="11" height="11" style="vertical-align:-1px"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>`,
+    media_online:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11" style="vertical-align:-1px"><path d="M4 4h16v16H4z" stroke-linejoin="round"/><path d="M7 8h10M7 12h7" stroke-linecap="round"/></svg>`,
+    instagram:`<svg viewBox="0 0 24 24" fill="none" stroke-width="2" width="11" height="11" style="vertical-align:-1px"><defs><linearGradient id="igp" x1="0%" y1="100%" x2="100%" y2="0%"><stop offset="0%" stop-color="#f09433"/><stop offset="100%" stop-color="#bc1888"/></linearGradient></defs><rect x="2" y="2" width="20" height="20" rx="5" stroke="url(#igp)"/><circle cx="12" cy="12" r="5" stroke="url(#igp)"/><circle cx="17.5" cy="6.5" r="1" fill="url(#igp)" stroke="none"/></svg>`,
+  };
+  const pL={twitter:'Twitter / X',media_online:'Media Online',instagram:'Instagram'};
+  R.sources.forEach(s=>{ const p=document.createElement('span'); p.className='src-pill '+(pC[s]||''); p.innerHTML=(pSVG[s]||'')+' '+pL[s]; pills.appendChild(p); });
 
   document.getElementById('kpi-tot').textContent     = R.total.toLocaleString('id-ID');
   document.getElementById('kpi-tot-sub').textContent = `${R.sources.length} sumber`;
