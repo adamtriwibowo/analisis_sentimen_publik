@@ -1949,7 +1949,7 @@ function toggleTheme() {
    SIAP BOT — nlp.js chatbot (lazy-loaded dari CDN)
    ══════════════════════════════════════════════════════════ */
 const SBOT = (() => {
-  let nlpReady = false, manager = null, panelOpen = false;
+  let panelOpen = false;
 
   /* ── Intents & training data ── */
   const TRAINING = [
@@ -2137,6 +2137,36 @@ const SBOT = (() => {
     }
   }
 
+  /* ── Built-in keyword-weighted intent classifier (no CDN) ── */
+  const INTENT_KB = [
+    { intent:'greeting',        min:2, kw:{'halo':3,'hai':3,'hi':3,'hey':2,'hei':2,'selamat':2,'pagi':1,'siang':1,'malam':1,'apa kabar':3,'assalamualaikum':3,'p':1} },
+    { intent:'farewell',        min:2, kw:{'bye':3,'dadah':3,'sampai jumpa':3,'terima kasih':2,'makasih':2,'thanks':2,'selesai':1,'keluar':1,'pamit':2,'tq':2} },
+    { intent:'help',            min:2, kw:{'bantuan':3,'help':3,'bisa apa':3,'fitur':2,'kemampuan':2,'cara pakai':3,'panduan':2,'apa saja':2,'fungsi':2} },
+    { intent:'about',           min:2, kw:{'tentang':2,'siap analytics':3,'aplikasi ini':3,'apa ini':3,'sistem ini':3,'deskripsi':2,'info':1,'profil':1} },
+    { intent:'search',          min:3, kw:{'cari':3,'analisis':2,'sentimen tentang':3,'cek':2,'lacak':2,'pantau':2,'mulai':1,'kata kunci':2,'topik':2,'analisa':2,'tracking':2} },
+    { intent:'nav.search',      min:2, kw:{'kembali':2,'pencarian baru':3,'halaman awal':3,'reset':3,'mulai ulang':3,'back':2,'baru':2,'pencarian':2} },
+    { intent:'results.ask',     min:2, kw:{'hasil':2,'lihat hasil':3,'bagaimana hasilnya':3,'statistik':2,'ringkasan':2,'berapa persen':3,'sentimen apa':3,'positif':1,'negatif':1,'netral':1,'summary':2} },
+    { intent:'export.csv',      min:2, kw:{'csv':3,'download data':3,'unduh data':3,'ekspor data':3,'export data':3,'simpan':2,'mentions':2,'tabel':1} },
+    { intent:'export.pdf',      min:2, kw:{'pdf':3,'unduh laporan':3,'cetak':3,'laporan':2,'download pdf':3,'export pdf':3,'print':2} },
+    { intent:'theme',           min:2, kw:{'tema':2,'dark':2,'light':2,'mode gelap':3,'mode terang':3,'ganti tema':3,'ubah tema':3,'switch':2,'terang':1,'gelap':1} },
+    { intent:'explain.sentiment',min:2,kw:{'apa itu sentimen':3,'sentimen itu apa':3,'jelaskan sentimen':3,'makna sentimen':3,'pengertian sentimen':3,'analisis sentimen bekerja':3} },
+    { intent:'explain.model',   min:2, kw:{'indoiert':3,'indobert':3,'model':2,'machine learning':3,'ai':2,'cara kerja':2,'teknologi':2,'nlp':2,'bert':3,'transformers':3,'neural':2} },
+    { intent:'suggest.keyword', min:2, kw:{'contoh kata kunci':3,'rekomendasi topik':3,'topik populer':3,'ide pencarian':3,'kata kunci apa':3,'sarankan':2,'usulan':2} },
+  ];
+
+  function classify(rawText) {
+    const t = rawText.toLowerCase().replace(/[.,!?]/g, ' ');
+    let best = { intent:'none', score:0 };
+    for (const { intent, min, kw } of INTENT_KB) {
+      let score = 0;
+      for (const [word, w] of Object.entries(kw)) {
+        if (t.includes(word)) score += w;
+      }
+      if (score >= min && score > best.score) best = { intent, score };
+    }
+    return best;
+  }
+
   /* ── Process user message ── */
   async function processInput(text) {
     text = text.trim();
@@ -2145,20 +2175,11 @@ const SBOT = (() => {
     document.getElementById('sbot-chips').innerHTML = '';
     appendMsg(text, 'user');
 
-    if (!nlpReady) {
-      showTyping();
-      await new Promise(r => setTimeout(r, 500));
-      removeTyping();
-      appendMsg('Model masih dimuat, sabar sebentar ya... ⏳', 'bot');
-      return;
-    }
-
     showTyping();
-    await new Promise(r => setTimeout(r, 420 + Math.random() * 300));
+    await new Promise(r => setTimeout(r, 380 + Math.random() * 280));
     removeTyping();
 
-    const result = await manager.process('id', text);
-    const intent = (result.intent && result.score > 0.35) ? result.intent : 'none';
+    const { intent } = classify(text);
 
     let reply;
     if (intent === 'results.ask') {
@@ -2172,71 +2193,10 @@ const SBOT = (() => {
     setChips(CHIPS[intent] || []);
     executeAction(intent, text);
 
-    // Show unread badge kalau panel tertutup
     if (!panelOpen) {
       const b = document.getElementById('sbot-badge');
       if (b) { b.textContent = '1'; b.classList.add('show'); }
     }
-  }
-
-  /* ── Load nlp.js dari CDN (lazy) ── */
-  async function loadNlp() {
-    return new Promise((resolve) => {
-      const s = document.createElement('script');
-      s.src = 'https://unpkg.com/node-nlp@3/dist/bundle.js';
-      s.async = true;
-      s.onload = () => resolve(true);
-      s.onerror = () => resolve(false);
-      document.head.appendChild(s);
-    });
-  }
-
-  async function initNlp() {
-    const ok = await loadNlp();
-    if (!ok || typeof NlpManager === 'undefined') {
-      setStatus(false);
-      document.getElementById('sbot-status-txt').textContent = 'Mode terbatas (offline)';
-      nlpReady = true; // fallback: still respond with basic rules
-      manager = { process: async (_lang, text) => fallbackClassify(text) };
-      appendMsg('Model NLP tidak berhasil dimuat dari CDN. Saya berjalan dalam mode dasar. 🤖', 'bot');
-      setChips(CHIPS.greeting);
-      return;
-    }
-
-    manager = new NlpManager({ languages: ['id'], nlu: { useNoneFeature: true } });
-    TRAINING.forEach(({ intent, lang, docs }) => {
-      docs.forEach(d => manager.addDocument(lang, d, intent));
-    });
-    Object.entries(ANSWERS).forEach(([intent, arr]) => {
-      if (!arr) return;
-      arr.forEach(a => manager.addAnswer('id', intent, a));
-    });
-    await manager.train();
-    nlpReady = true;
-    setStatus(true);
-  }
-
-  /* ── Simple fallback classifier (regex-based) ── */
-  function fallbackClassify(text) {
-    const t = text.toLowerCase();
-    const rules = [
-      [/\b(halo|hai|hi|hey|selamat)\b/, 'greeting'],
-      [/\b(bye|dadah|terima kasih|makasih|sampai jumpa)\b/, 'farewell'],
-      [/\b(bantuan|help|bisa apa|fitur)\b/, 'help'],
-      [/\b(tentang|apa itu siap|aplikasi ini)\b/, 'about'],
-      [/\b(cari|analisis|sentimen tentang|cek)\b/, 'search'],
-      [/\b(kembali|pencarian baru|reset)\b/, 'nav.search'],
-      [/\b(hasil|lihat hasil|statistik|ringkasan)\b/, 'results.ask'],
-      [/\b(csv|download data|unduh data)\b/, 'export.csv'],
-      [/\b(pdf|laporan|cetak)\b/, 'export.pdf'],
-      [/\b(tema|dark|light|mode gelap|mode terang)\b/, 'theme'],
-      [/\b(indoBERT|model|machine learning|AI|cara kerja)\b/, 'explain.model'],
-      [/\b(sentimen itu|analisis sentimen bekerja|apa itu sentimen)\b/, 'explain.sentiment'],
-    ];
-    for (const [re, intent] of rules) {
-      if (re.test(t)) return { intent, score: 0.9 };
-    }
-    return { intent: 'none', score: 0 };
   }
 
   /* ── Toggle panel ── */
@@ -2256,15 +2216,10 @@ const SBOT = (() => {
   function open() {
     if (!initialized) {
       initialized = true;
-      // Welcome message
+      setStatus(true);
       setTimeout(() => {
-        appendMsg('Halo! Saya **SIAP Bot**, asisten analisis sentimen Anda. 👋\n\nSedang memuat model NLP...', 'bot');
-        initNlp().then(() => {
-          if (nlpReady) {
-            appendMsg('Model siap! Saya bisa membantu pencarian, melihat hasil, export data, dan lainnya. Ketik **bantuan** untuk mulai.', 'bot');
-            setChips(CHIPS.greeting);
-          }
-        });
+        appendMsg('Halo! Saya **SIAP Bot**, asisten analisis sentimen Anda. 👋\n\nSaya bisa membantu pencarian, melihat hasil, export data, dan lainnya. Ketik **bantuan** untuk mulai.', 'bot');
+        setChips(CHIPS.greeting);
       }, 150);
     }
   }
