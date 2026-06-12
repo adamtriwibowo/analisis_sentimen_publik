@@ -1,6 +1,9 @@
 # Kredensial & database akun Twitter
 accounts.db
 
+# Database pengguna (berisi password hash — jangan di-commit)
+siap_users.db
+
 # Output scraping (data mentah)
 *.json
 

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>SIAP Analytics — Analisis Sentimen Publik</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <style>
@@ -32,11 +32,83 @@
   --txm:  #7a94b4;
   --txl:  #3d5570;
 
-  --fh: 'Playfair Display', Georgia, serif;
-  --fb: 'Plus Jakarta Sans', sans-serif;
+  --fh: 'Instrument Serif', Georgia, serif;
+  --fb: 'DM Sans', sans-serif;
   --fm: 'IBM Plex Mono', 'Courier New', monospace;
   --r:  6px; --rl: 10px;
   --sh: 0 0 0 1px rgba(255,255,255,.05), 0 8px 32px rgba(0,0,0,.4);
+}
+
+/* ══════════════════════════════════════
+   AURORA BACKGROUND
+   ══════════════════════════════════════ */
+.aurora{
+  position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;
+  transition:opacity .6s ease;
+}
+.aurora.dim{ opacity:.25; }
+.ab{
+  position:absolute;border-radius:50%;
+  filter:blur(80px);
+  will-change:transform,opacity;
+  mix-blend-mode:screen;
+}
+.ab-1{
+  width:900px;height:560px;
+  background:radial-gradient(ellipse at center,rgba(0,212,184,.3) 0%,transparent 65%);
+  top:-20%;left:-10%;
+  animation:ab1 22s ease-in-out infinite;
+}
+.ab-2{
+  width:700px;height:820px;
+  background:radial-gradient(ellipse at center,rgba(74,158,255,.22) 0%,transparent 62%);
+  top:-30%;right:0%;
+  animation:ab2 30s ease-in-out infinite;
+}
+.ab-3{
+  width:750px;height:450px;
+  background:radial-gradient(ellipse at center,rgba(99,102,241,.18) 0%,transparent 62%);
+  bottom:0%;left:20%;
+  animation:ab3 26s ease-in-out infinite;
+}
+.ab-4{
+  width:520px;height:620px;
+  background:radial-gradient(ellipse at center,rgba(0,176,154,.16) 0%,transparent 66%);
+  top:30%;right:-14%;
+  animation:ab4 34s ease-in-out infinite;
+}
+.ab-5{
+  width:460px;height:460px;
+  background:radial-gradient(ellipse at center,rgba(139,92,246,.14) 0%,transparent 63%);
+  bottom:-15%;left:5%;
+  animation:ab5 20s ease-in-out infinite;
+}
+@keyframes ab1{
+  0%,100%{transform:translate(0px,0px) scale(1) rotate(0deg);opacity:1}
+  25%{transform:translate(90px,70px) scale(1.12) rotate(12deg);opacity:.85}
+  50%{transform:translate(30px,140px) scale(.96) rotate(-8deg);opacity:1}
+  75%{transform:translate(-60px,50px) scale(1.06) rotate(5deg);opacity:.9}
+}
+@keyframes ab2{
+  0%,100%{transform:translate(0px,0px) scale(1) rotate(0deg);opacity:1}
+  20%{transform:translate(-110px,60px) scale(1.18) rotate(-18deg);opacity:.8}
+  45%{transform:translate(50px,130px) scale(.92) rotate(8deg);opacity:1}
+  70%{transform:translate(-40px,20px) scale(1.08) rotate(-4deg);opacity:.88}
+}
+@keyframes ab3{
+  0%,100%{transform:translate(0px,0px) scale(1);opacity:.9}
+  33%{transform:translate(70px,-60px) scale(1.14) rotate(10deg);opacity:1}
+  66%{transform:translate(-80px,40px) scale(.94) rotate(-7deg);opacity:.85}
+}
+@keyframes ab4{
+  0%,100%{transform:translate(0px,0px) scale(1);opacity:.8}
+  30%{transform:translate(-60px,90px) scale(1.1) rotate(-15deg);opacity:1}
+  60%{transform:translate(40px,-50px) scale(.9) rotate(8deg);opacity:.85}
+}
+@keyframes ab5{
+  0%,100%{transform:translate(0px,0px) scale(1) rotate(0deg);opacity:.75}
+  40%{transform:translate(100px,-40px) scale(1.2) rotate(20deg);opacity:1}
+  80%{transform:translate(-30px,70px) scale(.88) rotate(-12deg);opacity:.8}
 }
 
 /* ── Light theme overrides ── */
@@ -95,7 +167,7 @@ input{font-family:var(--fb)}
 
 /* ── Nav ── */
 nav{
-  position:fixed;top:0;left:0;right:0;z-index:200;height:52px;
+  position:fixed;top:0;left:0;right:0;z-index:201;height:52px;
   background:rgba(8,13,20,.92);backdrop-filter:blur(16px);
   border-bottom:1px solid var(--border);
   display:flex;align-items:center;justify-content:space-between;padding:0 24px;
@@ -110,7 +182,7 @@ nav{
 .nav-btn.primary:hover{background:var(--teal-bx)}
 
 /* ── Screens ── */
-.screen{display:none;position:fixed;inset:52px 0 0 0;overflow:hidden;animation:fadeUp .3s ease}
+.screen{display:none;position:fixed;inset:52px 0 0 0;overflow:hidden;animation:fadeUp .3s ease;z-index:1}
 .screen.active{display:flex}
 @keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 
@@ -129,8 +201,175 @@ nav{
 .search-hero p{font-size:13px;color:var(--txm);margin-top:7px}
 
 .search-card{
-  background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  background:var(--surface);border-radius:14px;
   box-shadow:var(--sh);padding:22px 24px;
+  /* BorderGlow requirements */
+  position:relative;
+  isolation:isolate;
+  transform:translate3d(0,0,0.01px);
+  overflow:visible;
+  border:1px solid rgb(255 255 255 / 12%);
+  /* ── CSS vars (matched to SIAP Analytics palette) ── */
+  --edge-proximity:0;
+  --cursor-angle:45deg;
+  --edge-sensitivity:22;
+  --color-sensitivity:calc(var(--edge-sensitivity) + 20);
+  --cone-spread:25;
+  --glow-padding:32px;
+  --fill-opacity:0.28;
+  --card-bg:#141f2e;
+  /* Teal glow */
+  --glow-color:hsl(174deg 100% 65% / 100%);
+  --glow-color-60:hsl(174deg 100% 65% / 60%);
+  --glow-color-50:hsl(174deg 100% 65% / 50%);
+  --glow-color-40:hsl(174deg 100% 65% / 40%);
+  --glow-color-30:hsl(174deg 100% 65% / 30%);
+  --glow-color-20:hsl(174deg 100% 65% / 20%);
+  --glow-color-10:hsl(174deg 100% 65% / 10%);
+  /* Mesh gradient — teal #00d4b8 · blue #4a9eff · indigo #6366f1 */
+  --gradient-one:  radial-gradient(at 80% 55%, #00d4b8 0px, transparent 50%);
+  --gradient-two:  radial-gradient(at 69% 34%, #4a9eff 0px, transparent 50%);
+  --gradient-three:radial-gradient(at  8%  6%, #6366f1 0px, transparent 50%);
+  --gradient-four: radial-gradient(at 41% 38%, #00d4b8 0px, transparent 50%);
+  --gradient-five: radial-gradient(at 86% 85%, #4a9eff 0px, transparent 50%);
+  --gradient-six:  radial-gradient(at 82% 18%, #6366f1 0px, transparent 50%);
+  --gradient-seven:radial-gradient(at 51%  4%, #4a9eff 0px, transparent 50%);
+  --gradient-base: linear-gradient(#00d4b8 0 100%);
+}
+
+/* ─────────────────────────────────────────────────────────
+   BorderGlow — search-card pseudo-elements & edge-light
+   Adapted from reactbits.dev/text-animations/border-glow
+   ───────────────────────────────────────────────────────── */
+
+/* shared base for all glow layers */
+.search-card::before,
+.search-card::after,
+.search-card > .edge-light{
+  content:"";
+  position:absolute;
+  inset:0;
+  border-radius:14px;
+  transition:opacity .25s ease-out;
+  z-index:-1;
+}
+
+/* hide when not hovering */
+.search-card:not(:hover)::before,
+.search-card:not(:hover)::after,
+.search-card:not(:hover) > .edge-light{
+  opacity:0;
+  transition:opacity .75s ease-in-out;
+}
+
+/* ── Layer 1: mesh-gradient colored border ── */
+.search-card::before{
+  border:1px solid transparent;
+  background:
+    linear-gradient(var(--card-bg) 0 100%) padding-box,
+    linear-gradient(rgb(255 255 255 / 0%) 0 100%) border-box,
+    var(--gradient-one)   border-box,
+    var(--gradient-two)   border-box,
+    var(--gradient-three) border-box,
+    var(--gradient-four)  border-box,
+    var(--gradient-five)  border-box,
+    var(--gradient-six)   border-box,
+    var(--gradient-seven) border-box,
+    var(--gradient-base)  border-box;
+  opacity:calc(
+    (var(--edge-proximity) - var(--color-sensitivity))
+    / (100 - var(--color-sensitivity))
+  );
+  mask-image:conic-gradient(
+    from var(--cursor-angle) at center,
+    black            calc(var(--cone-spread) * 1%),
+    transparent      calc((var(--cone-spread) + 15) * 1%),
+    transparent      calc((100 - var(--cone-spread) - 15) * 1%),
+    black            calc((100 - var(--cone-spread)) * 1%)
+  );
+}
+
+/* ── Layer 2: mesh-gradient background fill (soft-light blend) ── */
+.search-card::after{
+  border:1px solid transparent;
+  background:
+    var(--gradient-one)   padding-box,
+    var(--gradient-two)   padding-box,
+    var(--gradient-three) padding-box,
+    var(--gradient-four)  padding-box,
+    var(--gradient-five)  padding-box,
+    var(--gradient-six)   padding-box,
+    var(--gradient-seven) padding-box,
+    var(--gradient-base)  padding-box;
+  mask-image:
+    linear-gradient(to bottom, black, black),
+    radial-gradient(ellipse at 50% 50%, black 40%, transparent 65%),
+    radial-gradient(ellipse at 66% 66%, black 5%,  transparent 40%),
+    radial-gradient(ellipse at 33% 33%, black 5%,  transparent 40%),
+    radial-gradient(ellipse at 66% 33%, black 5%,  transparent 40%),
+    radial-gradient(ellipse at 33% 66%, black 5%,  transparent 40%),
+    conic-gradient(
+      from var(--cursor-angle) at center,
+      transparent 5%, black 15%, black 85%, transparent 95%
+    );
+  mask-composite:subtract,add,add,add,add,add;
+  opacity:calc(
+    var(--fill-opacity)
+    * (var(--edge-proximity) - var(--color-sensitivity))
+    / (100 - var(--color-sensitivity))
+  );
+  mix-blend-mode:soft-light;
+}
+
+/* ── Layer 3: outer glow (directional, follows cursor angle) ── */
+.search-card > .edge-light{
+  inset:calc(var(--glow-padding) * -1);
+  border-radius:calc(14px + var(--glow-padding));
+  pointer-events:none;
+  z-index:1;
+  mask-image:conic-gradient(
+    from var(--cursor-angle) at center,
+    black 2.5%, transparent 10%, transparent 90%, black 97.5%
+  );
+  opacity:calc(
+    (var(--edge-proximity) - var(--edge-sensitivity))
+    / (100 - var(--edge-sensitivity))
+  );
+  mix-blend-mode:plus-lighter;
+}
+
+.search-card > .edge-light::before{
+  content:"";
+  position:absolute;
+  inset:var(--glow-padding);
+  border-radius:14px;
+  box-shadow:
+    inset 0 0 0  1px var(--glow-color),
+    inset 0 0  1px 0  var(--glow-color-60),
+    inset 0 0  3px 0  var(--glow-color-50),
+    inset 0 0  6px 0  var(--glow-color-40),
+    inset 0 0 15px 0  var(--glow-color-30),
+    inset 0 0 25px 2px var(--glow-color-20),
+    inset 0 0 50px 2px var(--glow-color-10),
+          0 0  1px 0  var(--glow-color-60),
+          0 0  3px 0  var(--glow-color-50),
+          0 0  6px 0  var(--glow-color-40),
+          0 0 15px 0  var(--glow-color-30),
+          0 0 25px 2px var(--glow-color-20),
+          0 0 50px 2px var(--glow-color-10);
+}
+
+/* light theme: reduce glow intensity */
+html[data-theme="light"] .search-card{
+  --glow-color:hsl(174deg 80% 38% / 100%);
+  --glow-color-60:hsl(174deg 80% 38% / 50%);
+  --glow-color-50:hsl(174deg 80% 38% / 40%);
+  --glow-color-40:hsl(174deg 80% 38% / 30%);
+  --glow-color-30:hsl(174deg 80% 38% / 20%);
+  --glow-color-20:hsl(174deg 80% 38% / 12%);
+  --glow-color-10:hsl(174deg 80% 38% /  6%);
+  --card-bg:#ffffff;
+  --fill-opacity:0.12;
 }
 
 .fl{font-family:var(--fb);font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--txl);margin-bottom:7px}
@@ -233,6 +472,27 @@ nav{
 .proc-card{
   background:var(--surface);border:1px solid var(--border);border-radius:14px;
   box-shadow:var(--sh);padding:36px 40px;width:100%;max-width:440px;text-align:center;
+  /* BorderGlow requirements */
+  position:relative;isolation:isolate;
+  transform:translate3d(0,0,0.01px);overflow:visible;
+  --edge-proximity:0;--cursor-angle:45deg;
+  --edge-sensitivity:22;--color-sensitivity:calc(var(--edge-sensitivity) + 20);
+  --cone-spread:25;--glow-padding:28px;--fill-opacity:0.28;--card-bg:#141f2e;
+  --glow-color:hsl(174deg 100% 65% / 100%);
+  --glow-color-60:hsl(174deg 100% 65% / 60%);
+  --glow-color-50:hsl(174deg 100% 65% / 50%);
+  --glow-color-40:hsl(174deg 100% 65% / 40%);
+  --glow-color-30:hsl(174deg 100% 65% / 30%);
+  --glow-color-20:hsl(174deg 100% 65% / 20%);
+  --glow-color-10:hsl(174deg 100% 65% / 10%);
+  --gradient-one:  radial-gradient(at 80% 55%, #00d4b8 0px, transparent 50%);
+  --gradient-two:  radial-gradient(at 69% 34%, #4a9eff 0px, transparent 50%);
+  --gradient-three:radial-gradient(at  8%  6%, #6366f1 0px, transparent 50%);
+  --gradient-four: radial-gradient(at 41% 38%, #00d4b8 0px, transparent 50%);
+  --gradient-five: radial-gradient(at 86% 85%, #4a9eff 0px, transparent 50%);
+  --gradient-six:  radial-gradient(at 82% 18%, #6366f1 0px, transparent 50%);
+  --gradient-seven:radial-gradient(at 51%  4%, #4a9eff 0px, transparent 50%);
+  --gradient-base: linear-gradient(#00d4b8 0 100%);
 }
 .proc-logo{font-family:var(--fh);font-size:19px;font-weight:700;color:var(--txt);margin-bottom:20px;letter-spacing:.02em}
 .proc-logo .dot{color:var(--teal)}
@@ -251,6 +511,105 @@ nav{
 .proc-step.done .step-ico{background:var(--pos-bg);color:var(--pos)}
 .proc-step.active .step-ico{background:var(--teal-bg);color:var(--teal);animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
+
+/* ─────────────────────────────────────────────────────────
+   BorderGlow — proc-card (auto-rotates while .loading)
+   ───────────────────────────────────────────────────────── */
+.proc-card::before,
+.proc-card::after,
+.proc-card > .edge-light{
+  content:"";position:absolute;inset:0;
+  border-radius:14px;transition:opacity .4s ease-out;z-index:-1;
+}
+.proc-card:not(.loading)::before,
+.proc-card:not(.loading)::after,
+.proc-card:not(.loading) > .edge-light{opacity:0;transition:opacity 1s ease-in-out}
+
+.proc-card::before{
+  border:1px solid transparent;
+  background:
+    linear-gradient(var(--card-bg) 0 100%) padding-box,
+    linear-gradient(rgb(255 255 255 / 0%) 0 100%) border-box,
+    var(--gradient-one) border-box,var(--gradient-two) border-box,
+    var(--gradient-three) border-box,var(--gradient-four) border-box,
+    var(--gradient-five) border-box,var(--gradient-six) border-box,
+    var(--gradient-seven) border-box,var(--gradient-base) border-box;
+  opacity:calc(
+    (var(--edge-proximity) - var(--color-sensitivity))
+    / (100 - var(--color-sensitivity))
+  );
+  mask-image:conic-gradient(
+    from var(--cursor-angle) at center,
+    black            calc(var(--cone-spread) * 1%),
+    transparent      calc((var(--cone-spread) + 15) * 1%),
+    transparent      calc((100 - var(--cone-spread) - 15) * 1%),
+    black            calc((100 - var(--cone-spread)) * 1%)
+  );
+}
+.proc-card::after{
+  border:1px solid transparent;
+  background:
+    var(--gradient-one) padding-box,var(--gradient-two) padding-box,
+    var(--gradient-three) padding-box,var(--gradient-four) padding-box,
+    var(--gradient-five) padding-box,var(--gradient-six) padding-box,
+    var(--gradient-seven) padding-box,var(--gradient-base) padding-box;
+  mask-image:
+    linear-gradient(to bottom,black,black),
+    radial-gradient(ellipse at 50% 50%,black 40%,transparent 65%),
+    radial-gradient(ellipse at 66% 66%,black 5%,transparent 40%),
+    radial-gradient(ellipse at 33% 33%,black 5%,transparent 40%),
+    radial-gradient(ellipse at 66% 33%,black 5%,transparent 40%),
+    radial-gradient(ellipse at 33% 66%,black 5%,transparent 40%),
+    conic-gradient(from var(--cursor-angle) at center,transparent 5%,black 15%,black 85%,transparent 95%);
+  mask-composite:subtract,add,add,add,add,add;
+  opacity:calc(
+    var(--fill-opacity)
+    * (var(--edge-proximity) - var(--color-sensitivity))
+    / (100 - var(--color-sensitivity))
+  );
+  mix-blend-mode:soft-light;
+}
+.proc-card > .edge-light{
+  inset:calc(var(--glow-padding) * -1);
+  border-radius:calc(14px + var(--glow-padding));
+  pointer-events:none;z-index:1;
+  mask-image:conic-gradient(
+    from var(--cursor-angle) at center,
+    black 2.5%,transparent 10%,transparent 90%,black 97.5%
+  );
+  opacity:calc(
+    (var(--edge-proximity) - var(--edge-sensitivity))
+    / (100 - var(--edge-sensitivity))
+  );
+  mix-blend-mode:plus-lighter;
+}
+.proc-card > .edge-light::before{
+  content:"";position:absolute;inset:var(--glow-padding);border-radius:14px;
+  box-shadow:
+    inset 0 0 0  1px var(--glow-color),
+    inset 0 0  1px 0  var(--glow-color-60),
+    inset 0 0  3px 0  var(--glow-color-50),
+    inset 0 0  6px 0  var(--glow-color-40),
+    inset 0 0 15px 0  var(--glow-color-30),
+    inset 0 0 25px 2px var(--glow-color-20),
+    inset 0 0 50px 2px var(--glow-color-10),
+          0 0  1px 0  var(--glow-color-60),
+          0 0  3px 0  var(--glow-color-50),
+          0 0  6px 0  var(--glow-color-40),
+          0 0 15px 0  var(--glow-color-30),
+          0 0 25px 2px var(--glow-color-20),
+          0 0 50px 2px var(--glow-color-10);
+}
+html[data-theme="light"] .proc-card{
+  --glow-color:hsl(174deg 80% 38% / 100%);
+  --glow-color-60:hsl(174deg 80% 38% / 50%);
+  --glow-color-50:hsl(174deg 80% 38% / 40%);
+  --glow-color-40:hsl(174deg 80% 38% / 30%);
+  --glow-color-30:hsl(174deg 80% 38% / 20%);
+  --glow-color-20:hsl(174deg 80% 38% / 12%);
+  --glow-color-10:hsl(174deg 80% 38% /  6%);
+  --card-bg:#ffffff;--fill-opacity:0.12;
+}
 
 /* ══════════════════════════════════════
    SCREEN 3 — RESULTS (tab layout)
@@ -385,21 +744,21 @@ nav{
 /* ── PDF Report ── */
 #pdf-report{
   position:absolute;left:-9999px;top:0;width:794px;
-  background:#fff;font-family:'Plus Jakarta Sans',sans-serif;color:#0f172a;padding:0;
+  background:#fff;font-family:'DM Sans',sans-serif;color:#0f172a;padding:0;
 }
 .rpt-page{padding:40px 48px}
 .rpt-kop{display:flex;align-items:center;gap:16px;padding-bottom:14px;border-bottom:2.5px solid #00b09a;margin-bottom:18px}
-.rpt-kop-logo{width:46px;height:46px;flex-shrink:0;background:linear-gradient(135deg,#00b09a,#00d4b8);border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:14px;font-family:'Playfair Display',Georgia,serif}
-.rpt-kop-text h1{font-family:'Playfair Display',Georgia,serif;font-size:14px;font-weight:800;color:#0f172a}
+.rpt-kop-logo{width:46px;height:46px;flex-shrink:0;background:linear-gradient(135deg,#00b09a,#00d4b8);border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:14px;font-family:'Instrument Serif',Georgia,serif}
+.rpt-kop-text h1{font-family:'Instrument Serif',Georgia,serif;font-size:14px;font-weight:800;color:#0f172a}
 .rpt-kop-text p{font-size:10px;color:#64748b;margin-top:2px}
 .rpt-stamp{margin-left:auto;text-align:right;font-size:10px;color:#94a3b8;font-family:'IBM Plex Mono',monospace}
-.rpt-title{font-family:'Playfair Display',Georgia,serif;font-size:20px;font-weight:800;color:#0f172a;margin-bottom:4px}
+.rpt-title{font-family:'Instrument Serif',Georgia,serif;font-size:20px;font-weight:800;color:#0f172a;margin-bottom:4px}
 .rpt-sub{font-size:12px;color:#64748b;margin-bottom:18px}
 .rpt-meta-table{width:100%;border-collapse:collapse;margin-bottom:20px;font-size:11px}
 .rpt-meta-table td{padding:6px 10px}
 .rpt-meta-table tr:nth-child(odd){background:#f8fafc}
 .rpt-meta-table td:first-child{font-weight:700;color:#475569;width:150px}
-.rpt-section-title{font-family:'Playfair Display',Georgia,serif;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:#00b09a;margin:18px 0 8px;padding-bottom:5px;border-bottom:1px solid #e2e8f0}
+.rpt-section-title{font-family:'Instrument Serif',Georgia,serif;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:#00b09a;margin:18px 0 8px;padding-bottom:5px;border-bottom:1px solid #e2e8f0}
 .rpt-kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px}
 .rpt-kpi{text-align:center;padding:12px 6px;border-radius:7px;border-top:3px solid}
 .rpt-kpi.a{background:#eff6ff;border-color:#3b82f6}
@@ -445,17 +804,171 @@ nav{
 .rpt-page-2 .rpt-section-title{ margin-top: 0; }
 .rpt-page-2-recs{ flex: 1; display: flex; flex-direction: column; justify-content: flex-start; }
 .rpt-page-2-bottom{ margin-top: auto; padding-top: 24px; }
+
+/* ── Status indicator on src-cards ── */
+.src-card{ padding-bottom:22px; }
+.src-status{
+  position:absolute;bottom:5px;left:50%;transform:translateX(-50%);
+  font-size:9px;font-weight:700;letter-spacing:.04em;white-space:nowrap;
+  display:flex;align-items:center;gap:3px;opacity:0;transition:opacity .4s;
+}
+.src-status.visible{ opacity:1; }
+.src-dot{ width:5px;height:5px;border-radius:50%;flex-shrink:0; }
+.src-status.ok .src-dot{ background:var(--pos);box-shadow:0 0 5px var(--pos); }
+.src-status.ok{ color:var(--pos); }
+.src-status.warn .src-dot{ background:var(--neu); }
+.src-status.warn{ color:var(--neu); }
+.src-status.off .src-dot{ background:var(--txl); }
+.src-status.off{ color:var(--txl); }
+
+/* ── History chips ── */
+.history-row{ display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:8px;min-height:20px; }
+.history-lbl{ font-size:10px;color:var(--txl);flex-shrink:0; }
+.hist-chip{
+  font-size:11px;font-weight:600;color:var(--txm);
+  background:var(--sf2);border:1px solid var(--border);
+  padding:2px 8px 2px 10px;border-radius:99px;cursor:pointer;
+  transition:all .15s;display:flex;align-items:center;gap:4px;
+}
+.hist-chip:hover{ border-color:var(--teal);color:var(--teal);background:var(--teal-bg); }
+.hist-chip-rm{ opacity:.35;font-size:13px;line-height:1;background:none;border:none;color:inherit;padding:0 1px;cursor:pointer; }
+.hist-chip-rm:hover{ opacity:1; }
+
+/* ── Mention filter pills ── */
+.mention-filters{ display:flex;gap:5px;padding:8px 8px 2px;flex-wrap:wrap; }
+.mf-pill{
+  font-size:10px;font-weight:700;padding:3px 11px;border-radius:99px;
+  border:1px solid var(--border);background:var(--sf2);color:var(--txm);
+  cursor:pointer;transition:all .15s;font-family:var(--fm);
+}
+.mf-pill:hover{ border-color:var(--borderh);color:var(--txt); }
+.mf-pill.act-all{ border-color:var(--teal);background:var(--teal-bg);color:var(--teal); }
+.mf-pill.act-pos{ border-color:var(--pos);background:var(--pos-bg);color:var(--pos); }
+.mf-pill.act-neg{ border-color:var(--neg);background:var(--neg-bg);color:var(--neg); }
+.mf-pill.act-neu{ border-color:var(--neu);background:var(--neu-bg);color:var(--neu); }
+
+/* ── CSV export button ── */
+.btn-csv{
+  font-size:10px;font-weight:700;font-family:var(--fm);
+  padding:3px 10px;border-radius:5px;
+  background:var(--sf2);border:1px solid var(--border);
+  color:var(--txl);cursor:pointer;transition:all .15s;
+  display:flex;align-items:center;gap:4px;
+}
+.btn-csv:hover{ border-color:var(--teal);color:var(--teal);background:var(--teal-bg); }
+
+/* ── Source pill on mentions ── */
+.mn-src{
+  font-family:var(--fm);font-size:9px;font-weight:700;
+  padding:1px 7px;border-radius:99px;
+}
+.mn-src.tw{ background:rgba(74,158,255,.1);border:1px solid rgba(74,158,255,.25);color:var(--blue); }
+.mn-src.mo{ background:var(--teal-bg);border:1px solid var(--teal-bx);color:var(--teal); }
+.mn-src.ig{ background:rgba(168,85,247,.1);border:1px solid rgba(168,85,247,.25);color:#c084fc; }
+.mn-src.def{ background:var(--sf2);border:1px solid var(--border);color:var(--txl); }
+
+/* ── Live processing message ── */
+.proc-live{ font-family:var(--fm);font-size:10px;color:var(--teal);margin-top:10px;min-height:14px;letter-spacing:.03em;opacity:0;transition:opacity .3s;word-break:break-word; }
+.proc-live.on{ opacity:1; }
+
+/* ── Toast ── */
+#toast-rack{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+  z-index:9999;display:flex;flex-direction:column;align-items:center;gap:7px;pointer-events:none;
+}
+.toast{
+  font-size:12px;font-weight:600;font-family:var(--fb);
+  padding:9px 18px;border-radius:99px;
+  background:var(--surface);border:1px solid var(--border);
+  color:var(--txt);box-shadow:0 4px 20px rgba(0,0,0,.35);
+  animation:toastIn .25s cubic-bezier(.34,1.56,.64,1);
+  pointer-events:auto;display:flex;align-items:center;gap:7px;
+}
+.toast.ok{ border-color:var(--pos);color:var(--pos);background:var(--pos-bg); }
+.toast.bad{ border-color:var(--neg);color:var(--neg);background:var(--neg-bg); }
+.toast.info{ border-color:var(--teal);color:var(--teal);background:var(--teal-bg); }
+@keyframes toastIn{ from{ opacity:0;transform:translateY(10px) scale(.92); } to{ opacity:1;transform:none; } }
+
+/* ── Confirm modal ── */
+#confirm-modal{
+  display:none;position:fixed;inset:0;z-index:800;
+  background:rgba(0,0,0,.55);backdrop-filter:blur(5px);
+  align-items:center;justify-content:center;
+}
+#confirm-modal.open{ display:flex; }
+.cmod{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:16px;box-shadow:var(--sh);
+  padding:30px 32px;max-width:340px;width:90%;text-align:center;
+  animation:fadeUp .2s ease;
+}
+.cmod-icon{ font-size:36px;margin-bottom:10px; }
+.cmod-title{ font-family:var(--fh);font-size:16px;font-weight:700;color:var(--txt);margin-bottom:6px; }
+.cmod-txt{ font-size:12px;color:var(--txm);line-height:1.65;margin-bottom:20px; }
+.cmod-btns{ display:flex;gap:8px; }
+.cmod-btns button{ flex:1;padding:10px;border-radius:var(--rl);font-size:13px;font-weight:700;font-family:var(--fb);cursor:pointer;transition:all .15s;border:1px solid var(--border); }
+.cmod-cancel{ background:var(--sf2);color:var(--txm); }
+.cmod-cancel:hover{ color:var(--txt);border-color:var(--borderh); }
+.cmod-ok{ background:linear-gradient(135deg,#00b09a,#00d4b8);color:var(--bg);border-color:transparent; }
+.cmod-ok:hover{ box-shadow:0 4px 14px rgba(0,212,184,.35); }
+
+/* ── Empty state card ── */
+.empty-state{ text-align:center;padding:44px 24px; }
+.empty-icon{ font-size:42px;margin-bottom:12px; }
+.empty-title{ font-family:var(--fh);font-size:18px;font-weight:700;color:var(--txt);margin-bottom:6px; }
+.empty-body{ font-size:13px;color:var(--txm);line-height:1.7;max-width:340px;margin:0 auto 18px; }
+
+/* ── Mobile responsive ── */
+@media (max-width:768px){
+  .two-col,.three-col,.chart-main-col{ grid-template-columns:1fr !important; }
+  .kpi-strip{ grid-template-columns:1fr 1fr; }
+  .kpi:nth-child(2){ border-right:none; }
+  .source-row{ flex-wrap:wrap; }
+  .src-card{ min-width:calc(50% - 4px); }
+  .form-grid{ grid-template-columns:1fr; }
+  .search-wrap{ max-width:100%; }
+  .tab-bar{ overflow-x:auto;padding-bottom:1px; }
+  .tab-btn{ padding:10px 11px;font-size:11px; }
+  .res-topbar{ gap:8px; }
+  .src-pills{ display:none; }
+  .proc-card{ padding:28px 20px; }
+  .proc-pct{ font-size:36px; }
+}
+@media (max-width:480px){
+  nav{ padding:0 14px; }
+  .nav-logo{ font-size:14px; }
+  .nav-badge{ display:none; }
+  .tab-pane{ padding:12px 12px 16px; }
+  .res-topbar{ padding:0 12px; }
+  .card-body{ padding:10px; }
+  .search-card{ padding:16px; }
+}
 </style>
 </head>
 <body>
+
+<!-- Aurora background -->
+<div class="aurora" id="aurora-bg" aria-hidden="true">
+  <div class="ab ab-1"></div>
+  <div class="ab ab-2"></div>
+  <div class="ab ab-3"></div>
+  <div class="ab ab-4"></div>
+  <div class="ab ab-5"></div>
+</div>
 
 <!-- Nav -->
 <nav>
   <div class="nav-logo">SIAP<span class="dot">.</span>Analytics<span class="nav-badge">v2.3 · IndoBERT</span></div>
   <div class="nav-right">
+    <div id="nav-user-info" style="display:none;align-items:center;gap:7px">
+      <span id="nav-username" style="font-family:var(--fm);font-size:11px;color:var(--txm)"></span>
+      <span id="nav-role-badge" class="nav-badge"></span>
+    </div>
     <button class="btn-theme" id="btn-theme" onclick="toggleTheme()" title="Ganti tema">🌙</button>
+    <button class="nav-btn" id="btn-admin" style="display:none" onclick="location.href='/admin'">⚙ Admin</button>
     <button class="nav-btn" onclick="goSearch()">← Analisis Baru</button>
     <button class="nav-btn primary" id="btn-pdf-nav" style="display:none" onclick="downloadPDF()">⬇ Unduh PDF</button>
+    <a href="/auth/logout" class="nav-btn" style="color:var(--neg);border-color:rgba(255,90,110,.2)" id="btn-logout">Keluar</a>
   </div>
 </nav>
 
@@ -467,12 +980,14 @@ nav{
       <p>Masukkan kata kunci, pilih sumber data, dan dapatkan laporan sentimen berbasis AI dalam hitungan detik.</p>
     </div>
     <div class="search-card">
+      <span class="edge-light" aria-hidden="true"></span>
       <!-- Keyword -->
       <div class="fl">Kata Kunci Monitor</div>
       <div class="kw-input-wrap" id="kw-wrap" onclick="document.getElementById('kw-input').focus()">
         <input id="kw-input" placeholder="Ketik kata kunci → Enter untuk tambah…"/>
       </div>
       <div class="kw-hint">💡 Contoh: BPJS Kesehatan · program MBG · infrastruktur IKN</div>
+      <div class="history-row" id="history-row"></div>
 
       <!-- Date row -->
       <div class="form-grid" style="margin-top:14px">
@@ -498,6 +1013,7 @@ nav{
             </svg>
           </div>
           <div class="src-name">Twitter / X</div>
+          <div class="src-status" id="ss-twitter"><div class="src-dot"></div><span>—</span></div>
         </label>
         <label class="src-card selected" id="src-media">
           <input type="checkbox" value="media_online" checked onchange="toggleSrc(this,'src-media')"/>
@@ -510,6 +1026,7 @@ nav{
             </svg>
           </div>
           <div class="src-name">Media Online</div>
+          <div class="src-status" id="ss-media"><div class="src-dot"></div><span>—</span></div>
         </label>
         <label class="src-card selected" id="src-ig">
           <input type="checkbox" value="instagram" checked onchange="toggleSrc(this,'src-ig')"/>
@@ -531,6 +1048,7 @@ nav{
             </svg>
           </div>
           <div class="src-name">Instagram</div>
+          <div class="src-status" id="ss-ig"><div class="src-dot"></div><span>—</span></div>
         </label>
       </div>
 
@@ -567,10 +1085,12 @@ nav{
 <div id="screen-processing" class="screen">
   <div style="display:flex;align-items:center;justify-content:center;width:100%;padding:24px">
     <div class="proc-card">
+      <span class="edge-light" aria-hidden="true"></span>
       <div class="proc-logo">SIAP<span class="dot">.</span>Analytics</div>
       <div class="proc-pct" id="proc-pct">0%</div>
       <div class="proc-kw">Menganalisis: <strong id="proc-kw-label"></strong></div>
       <div class="prog-bar"><div class="prog-fill" id="prog-fill"></div></div>
+      <div class="proc-live" id="proc-live"></div>
       <div class="proc-steps" id="proc-steps">
         <div class="proc-step" data-step="0"><div class="step-ico">○</div>Mengumpulkan data dari sumber terpilih</div>
         <div class="proc-step" data-step="1"><div class="step-ico">○</div>Preprocessing &amp; normalisasi teks</div>
@@ -592,7 +1112,7 @@ nav{
       <div class="res-meta" id="res-meta"></div>
     </div>
     <div class="src-pills" id="src-pills"></div>
-    <button class="nav-btn" onclick="goSearch()">← Baru</button>
+    <button class="nav-btn" onclick="goSearchConfirm()">← Analisis Baru</button>
     <button class="nav-btn primary" onclick="downloadPDF()">⬇ PDF</button>
   </div>
 
@@ -671,6 +1191,16 @@ nav{
         <div class="card-head">
           <span class="card-title">Sampel Sebutan</span>
           <span class="card-badge" id="mention-count-badge"></span>
+          <button class="btn-csv" style="margin-left:auto" onclick="exportMentionCSV()">
+            <svg width="11" height="11" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            CSV
+          </button>
+        </div>
+        <div class="mention-filters" id="mention-filters">
+          <button class="mf-pill act-all" onclick="filterMentions('all',this)">Semua</button>
+          <button class="mf-pill" id="mfp-pos" onclick="filterMentions('pos',this)">Positif</button>
+          <button class="mf-pill" id="mfp-neg" onclick="filterMentions('neg',this)">Negatif</button>
+          <button class="mf-pill" id="mfp-neu" onclick="filterMentions('neu',this)">Netral</button>
         </div>
         <div class="card-body" style="padding:8px">
           <div class="mention-list" id="mention-list"></div>
@@ -685,6 +1215,22 @@ nav{
 
   </div><!-- /tab-content -->
 </div><!-- /screen-results -->
+
+<!-- Toast rack -->
+<div id="toast-rack"></div>
+
+<!-- Confirm modal -->
+<div id="confirm-modal">
+  <div class="cmod">
+    <div class="cmod-icon">↩</div>
+    <div class="cmod-title">Kembali ke Pencarian?</div>
+    <div class="cmod-txt">Hasil analisis saat ini akan hilang.<br>Lanjutkan?</div>
+    <div class="cmod-btns">
+      <button class="cmod-cancel" onclick="closeConfirm()">Batal</button>
+      <button class="cmod-ok" onclick="confirmGoSearch()">Ya, Analisis Baru</button>
+    </div>
+  </div>
+</div>
 
 <!-- PDF Report (hidden) -->
 <div id="pdf-report">
@@ -790,6 +1336,13 @@ function switchTab(name) {
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
+  const aurora = document.getElementById('aurora-bg');
+  if (aurora) aurora.classList.toggle('dim', id === 'screen-results');
+  // BorderGlow: start on proc-card while processing, stop otherwise
+  if (window._procGlow) {
+    if (id === 'screen-processing') window._procGlow.start();
+    else window._procGlow.stop();
+  }
 }
 function goSearch() {
   showScreen('screen-search');
@@ -865,9 +1418,13 @@ async function runProcessingWithPolling(jobId) {
     try {
       s = await (await fetch(`/api/status/${jobId}`)).json();
     } catch (_) {
-      alert('Koneksi ke server terputus. Pastikan server.py masih berjalan.');
-      goSearch(); return;
+      showToast('Koneksi server terputus — beralih ke simulasi', 'bad', 3500);
+      runProcessing(); return;
     }
+
+    // Live message
+    const liveEl = document.getElementById('proc-live');
+    if (s.message) { liveEl.textContent = s.message; liveEl.classList.add('on'); }
 
     // Update progress bar
     fill.style.width = (s.progress || 0) + '%';
@@ -886,8 +1443,7 @@ async function runProcessingWithPolling(jobId) {
       const data = await (await fetch(`/api/result/${jobId}`)).json();
       setTimeout(() => {
         if (!data || data._empty || data.total === 0) {
-          alert('Tidak ada tweet ditemukan untuk kata kunci ini.\nMenampilkan data simulasi sebagai referensi.');
-          showResults();
+          showEmptyState();
         } else {
           showResultsWithBadge(data);
         }
@@ -896,7 +1452,7 @@ async function runProcessingWithPolling(jobId) {
     }
 
     if (s.status === 'error') {
-      alert('Gagal: ' + (s.error || 'Unknown error') + '\nMenampilkan data simulasi.');
+      showToast('Error: ' + (s.error||'gagal') + ' — menampilkan simulasi', 'bad', 4000);
       showResults(); return;
     }
   }
@@ -1033,8 +1589,11 @@ function showResults(precomputed) {
   document.getElementById('kpi-neu-sub').textContent = Math.round(R.total*R.neu/100).toLocaleString('id-ID');
   document.getElementById('chart-range').textContent = df+' — '+dt;
 
+  document.getElementById('mention-filters').style.display = '';
   renderTrendChart(R); renderDonut(R); renderMentions(R); renderWordCloud(R); renderSrcBreakdown(R); renderRecs(R);
   buildPDFReport(R);
+  if (APP.keywords.length) saveHistory(APP.keywords);
+  setTimeout(() => showToast(`Analisis selesai — ${R.total.toLocaleString('id-ID')} data`, 'ok', 3000), 400);
 }
 
 function renderTrendChart(R) {
@@ -1054,7 +1613,7 @@ function renderTrendChart(R) {
     {label:'Positif',data:R.trend.map(t=>t.pos),borderColor:'#22d3a0',backgroundColor:gp,borderWidth:2,pointRadius:0,pointHoverRadius:4,tension:.4,fill:true},
     {label:'Negatif',data:R.trend.map(t=>t.neg),borderColor:'#ff5a6e',backgroundColor:gn,borderWidth:2,pointRadius:0,pointHoverRadius:4,tension:.4,fill:true},
     {label:'Netral',data:R.trend.map(t=>t.neu),borderColor:'#f5a623',backgroundColor:'transparent',borderWidth:1.5,borderDash:[4,4],pointRadius:0,tension:.4},
-  ]},options:{responsive:true,maintainAspectRatio:false,interaction:{intersect:false,mode:'index'},plugins:{legend:{labels:{color:legC,font:{family:'Plus Jakarta Sans',size:11,weight:'600'},boxWidth:14,usePointStyle:true,pointStyle:'line'}},tooltip:{backgroundColor:tipBg,borderColor:'rgba(128,128,128,.15)',borderWidth:1,titleColor:tipTxt,bodyColor:tipSub,titleFont:{family:'IBM Plex Mono',size:10},bodyFont:{family:'IBM Plex Mono',size:10},callbacks:{label:c=>` ${c.dataset.label}: ${c.parsed.y.toFixed(1)}%`}}},scales:{x:{grid:{color:gridC},ticks:{color:tickC,font:{family:'IBM Plex Mono',size:9},maxTicksLimit:8}},y:{grid:{color:gridC},ticks:{color:tickC,font:{family:'IBM Plex Mono',size:9},callback:v=>v+'%'},min:0,max:85}}}});
+  ]},options:{responsive:true,maintainAspectRatio:false,interaction:{intersect:false,mode:'index'},plugins:{legend:{labels:{color:legC,font:{family:'DM Sans',size:11,weight:'600'},boxWidth:14,usePointStyle:true,pointStyle:'line'}},tooltip:{backgroundColor:tipBg,borderColor:'rgba(128,128,128,.15)',borderWidth:1,titleColor:tipTxt,bodyColor:tipSub,titleFont:{family:'IBM Plex Mono',size:10},bodyFont:{family:'IBM Plex Mono',size:10},callbacks:{label:c=>` ${c.dataset.label}: ${c.parsed.y.toFixed(1)}%`}}},scales:{x:{grid:{color:gridC},ticks:{color:tickC,font:{family:'IBM Plex Mono',size:9},maxTicksLimit:8}},y:{grid:{color:gridC},ticks:{color:tickC,font:{family:'IBM Plex Mono',size:9},callback:v=>v+'%'},min:0,max:85}}}});
 }
 
 function renderDonut(R) {
@@ -1074,14 +1633,16 @@ function renderDonut(R) {
 }
 
 function renderMentions(R) {
-  const list=document.getElementById('mention-list'); list.innerHTML='';
-  document.getElementById('mention-count-badge').textContent=R.mentions.length+' sebutan';
-  const times=['baru saja','1 mnt lalu','3 mnt lalu','7 mnt lalu','14 mnt lalu','22 mnt lalu','38 mnt lalu','1 jam lalu'];
-  R.mentions.forEach((m,i)=>{
-    const el=document.createElement('div'); el.className='mention';
-    el.innerHTML=`<div><div class="mn-head"><span class="mn-user">${m.user}</span><span class="mn-plat">${m.pl}</span><span class="mn-time">${times[i%times.length]}</span></div><div class="mn-txt">${m.txt}</div><div class="mn-conf">Kepercayaan model: ${m.cf}%</div></div><span class="badge ${m.s}">${{pos:'Positif',neg:'Negatif',neu:'Netral'}[m.s]}</span>`;
-    list.appendChild(el);
-  });
+  // update filter pill counts
+  const cnt = s => R.mentions.filter(m=>m.s===s).length;
+  document.getElementById('mfp-pos').textContent = `Positif ${cnt('pos')}`;
+  document.getElementById('mfp-neg').textContent = `Negatif ${cnt('neg')}`;
+  document.getElementById('mfp-neu').textContent = `Netral ${cnt('neu')}`;
+  document.getElementById('mention-count-badge').textContent = R.mentions.length + ' sebutan';
+  _mentionFilter = 'all';
+  document.querySelectorAll('.mf-pill').forEach(p=>p.className='mf-pill');
+  document.querySelector('.mf-pill').classList.add('act-all');
+  renderMentionList();
 }
 
 function renderWordCloud(R) {
@@ -1207,10 +1768,263 @@ function toggleTheme() {
 (function initTheme(){
   const saved = localStorage.getItem('siap-theme') || 'dark';
   document.documentElement.setAttribute('data-theme', saved);
-  /* Script is at bottom-of-body, DOM is ready */
   const b = document.getElementById('btn-theme');
   if (b) b.textContent = saved==='light' ? '☀️' : '🌙';
 })();
+
+/* ─── BorderGlow — proc-card: auto-rotate while loading + pointer tracker ─── */
+(function() {
+  const card = document.querySelector('.proc-card');
+  if (!card) return;
+  let rafId = null, autoAngle = 0, isPointerOver = false;
+
+  function start() {
+    card.classList.add('loading');
+    card.style.setProperty('--edge-proximity', '100');
+    let lastTime = null;
+    function rotate(time) {
+      if (!lastTime) lastTime = time;
+      const dt = time - lastTime; lastTime = time;
+      if (!isPointerOver) {
+        autoAngle = (autoAngle + dt * 0.065) % 360; // ~15s per rotation
+        card.style.setProperty('--cursor-angle', autoAngle.toFixed(2) + 'deg');
+      }
+      rafId = requestAnimationFrame(rotate);
+    }
+    if (rafId) cancelAnimationFrame(rafId);
+    rafId = requestAnimationFrame(rotate);
+  }
+
+  function stop() {
+    card.classList.remove('loading');
+    card.style.setProperty('--edge-proximity', '0');
+    if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+  }
+
+  function onMove(e) {
+    const r = card.getBoundingClientRect();
+    const dx = e.clientX - r.left - r.width  / 2;
+    const dy = e.clientY - r.top  - r.height / 2;
+    const kx = dx !== 0 ? (r.width  / 2) / Math.abs(dx) : Infinity;
+    const ky = dy !== 0 ? (r.height / 2) / Math.abs(dy) : Infinity;
+    const edge = Math.min(Math.max(1 / Math.min(kx, ky), 0), 1) * 100;
+    let angle = Math.atan2(dy, dx) * (180 / Math.PI) + 90;
+    if (angle < 0) angle += 360;
+    autoAngle = angle;
+    card.style.setProperty('--edge-proximity', edge.toFixed(2));
+    card.style.setProperty('--cursor-angle',   angle.toFixed(2) + 'deg');
+  }
+
+  card.addEventListener('pointerenter', () => { isPointerOver = true; });
+  card.addEventListener('pointermove',  onMove);
+  card.addEventListener('pointerleave', () => {
+    isPointerOver = false;
+    if (card.classList.contains('loading'))
+      card.style.setProperty('--edge-proximity', '100');
+  });
+
+  window._procGlow = { start, stop };
+})();
+
+/* ─── BorderGlow — search-card pointer tracker ─── */
+(function() {
+  const card = document.querySelector('.search-card');
+  if (!card) return;
+
+  function onMove(e) {
+    const r  = card.getBoundingClientRect();
+    const x  = e.clientX - r.left;
+    const y  = e.clientY - r.top;
+    const cx = r.width  / 2;
+    const cy = r.height / 2;
+    const dx = x - cx, dy = y - cy;
+
+    // Edge proximity 0–100
+    const kx = dx !== 0 ? cx / Math.abs(dx) : Infinity;
+    const ky = dy !== 0 ? cy / Math.abs(dy) : Infinity;
+    const edge = Math.min(Math.max(1 / Math.min(kx, ky), 0), 1) * 100;
+
+    // Cursor angle 0–360 (0° = top, clockwise)
+    let angle = Math.atan2(dy, dx) * (180 / Math.PI) + 90;
+    if (angle < 0) angle += 360;
+
+    card.style.setProperty('--edge-proximity', edge.toFixed(2));
+    card.style.setProperty('--cursor-angle',   angle.toFixed(2) + 'deg');
+  }
+
+  card.addEventListener('pointermove', onMove);
+  card.addEventListener('pointerleave', () =>
+    card.style.setProperty('--edge-proximity', '0')
+  );
+})();
+
+/* ─── Session check & user info ─── */
+(async function initSession(){
+  try {
+    const r = await fetch('/api/me', { signal: AbortSignal.timeout(3000) });
+    if (!r.ok) { location.href = '/login'; return; }
+    const me = await r.json();
+    const info = document.getElementById('nav-user-info');
+    document.getElementById('nav-username').textContent = me.username;
+    const badge = document.getElementById('nav-role-badge');
+    badge.textContent = me.role === 'admin' ? 'Admin' : 'Viewer';
+    badge.style.cssText = me.role === 'admin'
+      ? 'background:rgba(74,158,255,.1);border-color:rgba(74,158,255,.25);color:var(--blue)'
+      : '';
+    info.style.display = 'flex';
+    if (me.role === 'admin') document.getElementById('btn-admin').style.display = 'block';
+  } catch(_) {
+    // server offline — tetap tampilkan dashboard (mode offline/simulasi)
+  }
+})();
+
+/* ─── Empty state ─── */
+function showEmptyState() {
+  showScreen('screen-results');
+  switchTab('mentions');
+  document.getElementById('btn-pdf-nav').style.display = 'none';
+  document.getElementById('res-title').textContent = 'Tidak ada data ditemukan';
+  document.getElementById('res-meta').textContent = 'Coba kata kunci lain atau impor data JSON';
+  document.getElementById('src-pills').innerHTML = '';
+  ['kpi-tot','kpi-pos','kpi-neg','kpi-neu'].forEach(id => document.getElementById(id).textContent = '—');
+  document.getElementById('mention-list').innerHTML = `
+    <div class="empty-state">
+      <div class="empty-icon">🔍</div>
+      <div class="empty-title">Tidak Ada Data Ditemukan</div>
+      <div class="empty-body">Kata kunci "<strong>${APP.keywords.join(' + ')}</strong>" tidak menghasilkan data dari sumber yang dipilih.<br><br>Kemungkinan penyebab: rate limit Twitter, kata kunci terlalu spesifik, atau scraper belum terhubung.</div>
+      <button class="btn-analyze" style="max-width:280px;margin:0 auto" onclick="triggerImport()">
+        <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+        Impor Data JSON
+      </button>
+      <div style="margin-top:10px">
+        <button class="btn-import" style="max-width:280px;margin:0 auto" onclick="showResults()">Lihat Data Simulasi</button>
+      </div>
+    </div>`;
+  document.getElementById('mention-filters').style.display = 'none';
+  showToast('Tidak ada data — tampilkan empty state', 'bad', 3000);
+}
+
+/* ─── Toast ─── */
+function showToast(msg, type='info', dur=3000) {
+  const rack = document.getElementById('toast-rack');
+  const t = document.createElement('div');
+  t.className = 'toast ' + type;
+  t.textContent = msg;
+  rack.appendChild(t);
+  setTimeout(() => { t.style.animation='toastIn .25s ease reverse'; setTimeout(()=>t.remove(), 250); }, dur);
+}
+
+/* ─── Confirm modal ─── */
+function goSearchConfirm() {
+  if (APP.results) {
+    document.getElementById('confirm-modal').classList.add('open');
+  } else {
+    goSearch();
+  }
+}
+function closeConfirm() { document.getElementById('confirm-modal').classList.remove('open'); }
+function confirmGoSearch() { closeConfirm(); goSearch(); }
+document.getElementById('confirm-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeConfirm();
+});
+
+/* ─── Scraper status ─── */
+async function fetchServerStatus() {
+  try {
+    const info = await (await fetch('/api/info', { signal: AbortSignal.timeout(3000) })).json();
+    const tw = document.getElementById('ss-twitter');
+    const mo = document.getElementById('ss-media');
+    const ig = document.getElementById('ss-ig');
+    // Twitter: ok jika twscrape ready
+    setStatus(tw, info.twscrape ? 'ok' : 'warn', info.twscrape ? 'Terhubung' : 'Perlu akun');
+    // Media Online: selalu aktif (RSS)
+    setStatus(mo, 'ok', 'RSS Aktif');
+    // Instagram: warn (butuh login manual)
+    setStatus(ig, 'warn', 'Perlu login');
+  } catch(_) {
+    // server offline — tunjukkan semua offline
+    ['ss-twitter','ss-media','ss-ig'].forEach(id => setStatus(document.getElementById(id), 'off', 'Offline'));
+  }
+}
+function setStatus(el, cls, label) {
+  if (!el) return;
+  el.className = 'src-status ' + cls + ' visible';
+  el.querySelector('span').textContent = label;
+}
+fetchServerStatus();
+
+/* ─── Search history ─── */
+function loadHistory() { try { return JSON.parse(localStorage.getItem('siap-history') || '[]'); } catch(_){ return []; } }
+function saveHistory(keywords) {
+  let h = loadHistory().filter(e => e !== keywords.join('·'));
+  h.unshift(keywords.join('·'));
+  if (h.length > 5) h = h.slice(0, 5);
+  localStorage.setItem('siap-history', JSON.stringify(h));
+  renderHistory();
+}
+function renderHistory() {
+  const row = document.getElementById('history-row');
+  const h = loadHistory();
+  if (!h.length) { row.innerHTML=''; return; }
+  row.innerHTML = '<span class="history-lbl">Terakhir:</span>' +
+    h.map((e,i) => `<span class="hist-chip" onclick="loadFromHistory(${i})">${e.replace(/·/g,' + ')}<button class="hist-chip-rm" onclick="removeHistory(event,${i})">×</button></span>`).join('');
+}
+function loadFromHistory(i) {
+  const e = loadHistory()[i];
+  if (!e) return;
+  APP.keywords = e.split('·').map(k=>k.trim()).filter(Boolean);
+  renderTags();
+  showToast('Kata kunci dimuat dari riwayat', 'info', 2200);
+}
+function removeHistory(ev, i) {
+  ev.stopPropagation();
+  const h = loadHistory(); h.splice(i,1);
+  localStorage.setItem('siap-history', JSON.stringify(h));
+  renderHistory();
+}
+renderHistory();
+
+/* ─── Mention filter ─── */
+let _mentionFilter = 'all';
+function filterMentions(type, btn) {
+  _mentionFilter = type;
+  document.querySelectorAll('.mf-pill').forEach(p => p.className = 'mf-pill');
+  btn.classList.add('act-' + type);
+  renderMentionList();
+}
+function renderMentionList() {
+  if (!APP.results) return;
+  const R = APP.results;
+  const list = document.getElementById('mention-list'); list.innerHTML = '';
+  const filtered = _mentionFilter === 'all' ? R.mentions : R.mentions.filter(m => m.s === _mentionFilter);
+  const times = ['baru saja','1 mnt lalu','3 mnt lalu','7 mnt lalu','14 mnt lalu','22 mnt lalu','38 mnt lalu','1 jam lalu'];
+  const srcClass = { 'Twitter / X':'tw', 'Media Online':'mo', 'Instagram':'ig' };
+  if (!filtered.length) {
+    list.innerHTML = `<div style="padding:24px;text-align:center;font-size:12px;color:var(--txl)">Tidak ada sebutan ${_mentionFilter==='all'?'':({pos:'positif',neg:'negatif',neu:'netral'}[_mentionFilter]||'')}.</div>`;
+    return;
+  }
+  filtered.forEach((m,i) => {
+    const sc = srcClass[m.pl] || 'def';
+    const el = document.createElement('div'); el.className = 'mention';
+    el.innerHTML = `<div><div class="mn-head"><span class="mn-user">${m.user}</span><span class="mn-src ${sc}">${m.pl}</span><span class="mn-time">${times[i%times.length]}</span></div><div class="mn-txt">${m.txt}</div><div class="mn-conf">Kepercayaan model: ${m.cf}%</div></div><span class="badge ${m.s}">${{pos:'Positif',neg:'Negatif',neu:'Netral'}[m.s]}</span>`;
+    list.appendChild(el);
+  });
+}
+
+/* ─── Export CSV ─── */
+function exportMentionCSV() {
+  if (!APP.results || !APP.results.mentions.length) { showToast('Tidak ada data untuk diekspor', 'bad'); return; }
+  const R = APP.results;
+  const rows = [['No','User','Platform','Sentimen','Kepercayaan (%)','Teks']];
+  R.mentions.forEach((m,i) => rows.push([i+1, m.user, m.pl, {pos:'Positif',neg:'Negatif',neu:'Netral'}[m.s]||m.s, m.cf, '"'+m.txt.replace(/"/g,'""')+'"']));
+  const csv = rows.map(r=>r.join(',')).join('\r\n');
+  const blob = new Blob(['﻿'+csv], { type:'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `Mentions_${R.keywords.join('-')}_${new Date().toISOString().split('T')[0]}.csv`;
+  a.click();
+  showToast('CSV berhasil diunduh', 'ok', 2500);
+}
 
 function downloadPDF() {
   const el=document.getElementById('pdf-report');

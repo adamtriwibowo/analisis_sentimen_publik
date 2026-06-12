@@ -10,15 +10,19 @@ import os
 import uuid
 import asyncio
 import threading
+import secrets
 
 if sys.platform == "win32" and hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
-from flask import Flask, request, jsonify, send_file
-
+from flask import Flask, request, jsonify, send_file, redirect, url_for
+from flask_login import (
+    LoginManager, login_required, login_user, logout_user, current_user,
+)
 from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeout
 
+from auth import init_db, get_user_by_id, verify_user, create_user, delete_user, get_all_users, update_password
 from twitter_scraper import (
     scrape_tweets,
     analyze_sentiment_batch,
@@ -28,23 +32,144 @@ from twitter_scraper import (
 )
 
 app = Flask(__name__)
+app.secret_key = os.environ.get("SIAP_SECRET", secrets.token_hex(32))
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# ── Flask-Login ───────────────────────────────────────────────────────────────
+
+login_manager = LoginManager(app)
+login_manager.login_view = "login_page"
+
+
+@login_manager.user_loader
+def load_user(user_id):
+    return get_user_by_id(user_id)
+
 
 # In-memory job store  { job_id: {...} }
 _jobs: dict = {}
 
 
+# ── Auth routes ───────────────────────────────────────────────────────────────
+
+@app.route("/login")
+def login_page():
+    if current_user.is_authenticated:
+        return redirect("/")
+    return send_file(os.path.join(BASE_DIR, "login.html"))
+
+
+@app.route("/auth/login", methods=["POST"])
+def auth_login():
+    username = request.form.get("username", "").strip()
+    password = request.form.get("password", "").strip()
+    remember = bool(request.form.get("remember"))
+
+    if not username or not password:
+        return redirect("/login?error=required")
+
+    user = verify_user(username, password)
+    if not user:
+        return redirect("/login?error=invalid")
+
+    login_user(user, remember=remember)
+    return redirect(request.args.get("next") or "/")
+
+
+@app.route("/auth/logout")
+@login_required
+def auth_logout():
+    logout_user()
+    return redirect("/login")
+
+
+# ── Admin: manajemen pengguna ─────────────────────────────────────────────────
+
+@app.route("/admin")
+@login_required
+def admin_page():
+    if not current_user.is_admin():
+        return redirect("/")
+    return send_file(os.path.join(BASE_DIR, "admin.html"))
+
+
+@app.route("/auth/users", methods=["GET"])
+@login_required
+def list_users():
+    if not current_user.is_admin():
+        return jsonify({"error": "Akses ditolak"}), 403
+    return jsonify(get_all_users())
+
+
+@app.route("/auth/users", methods=["POST"])
+@login_required
+def add_user():
+    if not current_user.is_admin():
+        return jsonify({"error": "Akses ditolak"}), 403
+    body = request.get_json(force=True)
+    username = (body.get("username") or "").strip()
+    password = (body.get("password") or "").strip()
+    role     = body.get("role", "viewer")
+    if not username or not password:
+        return jsonify({"error": "Username dan password wajib diisi"}), 400
+    if role not in ("admin", "viewer"):
+        return jsonify({"error": "Role tidak valid"}), 400
+    try:
+        create_user(username, password, role)
+        return jsonify({"ok": True})
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 409
+
+
+@app.route("/auth/users/<int:uid>", methods=["DELETE"])
+@login_required
+def remove_user(uid):
+    if not current_user.is_admin():
+        return jsonify({"error": "Akses ditolak"}), 403
+    if str(uid) == current_user.id:
+        return jsonify({"error": "Tidak dapat menghapus akun sendiri"}), 400
+    delete_user(uid)
+    return jsonify({"ok": True})
+
+
+@app.route("/auth/users/<int:uid>/password", methods=["PUT"])
+@login_required
+def change_password(uid):
+    if not current_user.is_admin():
+        return jsonify({"error": "Akses ditolak"}), 403
+    body = request.get_json(force=True)
+    pw = (body.get("password") or "").strip()
+    if len(pw) < 6:
+        return jsonify({"error": "Password minimal 6 karakter"}), 400
+    update_password(uid, pw)
+    return jsonify({"ok": True})
+
+
 # ── Halaman utama ─────────────────────────────────────────────────────────────
 
 @app.route("/")
+@login_required
 def index():
     return send_file(os.path.join(BASE_DIR, "sentimen_app.html"))
+
+
+# ── API: info pengguna saat ini ───────────────────────────────────────────────
+
+@app.route("/api/me")
+@login_required
+def api_me():
+    return jsonify({
+        "id":       current_user.id,
+        "username": current_user.username,
+        "role":     current_user.role,
+    })
 
 
 # ── API: mulai analisis ───────────────────────────────────────────────────────
 
 @app.route("/api/analyze", methods=["POST"])
+@login_required
 def start_analyze():
     body      = request.get_json(force=True)
     keywords  = body.get("keywords", [])
@@ -79,6 +204,7 @@ def start_analyze():
 # ── API: cek status job ───────────────────────────────────────────────────────
 
 @app.route("/api/status/<job_id>")
+@login_required
 def job_status(job_id):
     j = _jobs.get(job_id)
     if not j:
@@ -95,6 +221,7 @@ def job_status(job_id):
 # ── API: ambil hasil job ──────────────────────────────────────────────────────
 
 @app.route("/api/result/<job_id>")
+@login_required
 def job_result(job_id):
     j = _jobs.get(job_id)
     if not j:
@@ -109,11 +236,12 @@ def job_result(job_id):
 # ── API: info sistem ──────────────────────────────────────────────────────────
 
 @app.route("/api/info")
+@login_required
 def api_info():
     return jsonify({
-        "twscrape":     HAS_TWSCRAPE,
-        "indobert":     HAS_TRANSFORMERS,
-        "server":       "SIAP Analytics v2.3",
+        "twscrape": HAS_TWSCRAPE,
+        "indobert": HAS_TRANSFORMERS,
+        "server":   "SIAP Analytics v2.3",
     })
 
 
@@ -124,18 +252,16 @@ def _set(job_id, **kw):
         _jobs[job_id].update(kw)
 
 
-SCRAPE_TIMEOUT = 90  # detik per sumber
+SCRAPE_TIMEOUT = 90
 
 SRC_NAMES = {
-    "twitter":     "Twitter / X",
+    "twitter":      "Twitter / X",
     "media_online": "Media Online",
-    "instagram":   "Instagram",
+    "instagram":    "Instagram",
 }
 
-# ── Sync wrappers untuk tiap scraper ─────────────────────────────────────────
 
 def _run_twitter(keywords, volume, date_from, date_to):
-    """Wrapper sync untuk scraper Twitter (async → sync via event loop baru)."""
     if not HAS_TWSCRAPE:
         return []
     loop = asyncio.new_event_loop()
@@ -157,7 +283,6 @@ def _run_twitter(keywords, volume, date_from, date_to):
 
 
 def _run_media(keywords, volume, date_from, date_to):
-    """Wrapper untuk Media Online scraper."""
     try:
         from scraper_media import scrape_media_online
         return scrape_media_online(keywords, volume, date_from, date_to)
@@ -167,7 +292,6 @@ def _run_media(keywords, volume, date_from, date_to):
 
 
 def _run_instagram(keywords, volume, date_from, date_to):
-    """Wrapper untuk Instagram scraper."""
     try:
         from scraper_instagram import scrape_instagram_sync
         return scrape_instagram_sync(keywords, volume, date_from, date_to)
@@ -177,10 +301,9 @@ def _run_instagram(keywords, volume, date_from, date_to):
 
 
 def _heartbeat(job_id, stop_event, from_pct, to_pct, duration_sec):
-    """Gerakkan progress bar perlahan selama scraping berlangsung."""
-    steps = 20
+    steps    = 20
     interval = duration_sec / steps
-    delta = (to_pct - from_pct) / steps
+    delta    = (to_pct - from_pct) / steps
     for i in range(steps):
         if stop_event.is_set():
             break
@@ -196,12 +319,10 @@ def _run_job(job_id, keywords, sources, date_from, date_to, volume, do_sent):
         src_count  = max(len(sources), 1)
         per_source = max(30, volume // src_count)
 
-        # Step 0 — Pengumpulan data (paralel semua sumber terpilih)
         src_list = ", ".join(SRC_NAMES.get(s, s) for s in sources)
         _set(job_id, step=0, progress=10,
              message=f"Mengumpulkan data: {src_list}...")
 
-        # Heartbeat progress 10%→33% selama scraping berlangsung
         stop_hb = threading.Event()
         hb = threading.Thread(
             target=_heartbeat,
@@ -211,12 +332,11 @@ def _run_job(job_id, keywords, sources, date_from, date_to, volume, do_sent):
         hb.start()
 
         RUNNERS = {
-            "twitter":     (_run_twitter,   [keywords, per_source, date_from, date_to]),
-            "media_online": (_run_media,     [keywords, per_source, date_from, date_to]),
-            "instagram":   (_run_instagram,  [keywords, per_source, date_from, date_to]),
+            "twitter":      (_run_twitter,   [keywords, per_source, date_from, date_to]),
+            "media_online": (_run_media,      [keywords, per_source, date_from, date_to]),
+            "instagram":    (_run_instagram,  [keywords, per_source, date_from, date_to]),
         }
 
-        # Jalankan scraper yang dipilih secara paralel
         with ThreadPoolExecutor(max_workers=3) as ex:
             futures = {
                 src: ex.submit(fn, *args)
@@ -239,13 +359,9 @@ def _run_job(job_id, keywords, sources, date_from, date_to, volume, do_sent):
 
         stop_hb.set()
 
-        # Step 1 — Preprocessing
         _set(job_id, step=1, progress=38, message="Preprocessing & normalisasi teks")
-
-        # Step 2 — Tokenisasi
         _set(job_id, step=2, progress=58, message="Tokenisasi dengan IndoBERT Tokenizer")
 
-        # Step 3 — Klasifikasi sentimen
         if do_sent and all_tweets:
             _set(job_id, step=3, progress=72,
                  message=f"Klasifikasi sentimen {len(all_tweets)} data...")
@@ -255,7 +371,6 @@ def _run_job(job_id, keywords, sources, date_from, date_to, volume, do_sent):
                 t.setdefault("sentiment", "neu")
                 t.setdefault("confidence", 50)
 
-        # Step 4 — Susun laporan
         _set(job_id, step=4, progress=90, message="Menyusun laporan & rekomendasi")
         result = compute_siap_output(all_tweets, keywords, date_from or "", date_to or "")
 
@@ -277,6 +392,7 @@ def _run_job(job_id, keywords, sources, date_from, date_to, volume, do_sent):
 # ── Entry point ───────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
+    init_db()
     print("=" * 52)
     print("  SIAP Analytics - Server")
     print("  Buka browser : http://localhost:5000")

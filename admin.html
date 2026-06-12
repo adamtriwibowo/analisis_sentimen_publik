@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="dark">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>SIAP Analytics — Admin Panel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#080d14;--bg2:#0d1520;--bg3:#111c2a;--surface:#141f2e;--sf2:#192636;
+  --border:rgba(255,255,255,.07);--borderh:rgba(255,255,255,.15);
+  --teal:#00d4b8;--teal-d:#00b09a;--teal-bg:rgba(0,212,184,.08);--teal-bx:rgba(0,212,184,.18);
+  --pos:#22d3a0;--pos-bg:rgba(34,211,160,.1);
+  --neg:#ff5a6e;--neg-bg:rgba(255,90,110,.1);
+  --neu:#f5a623;--neu-bg:rgba(245,166,35,.1);
+  --blue:#4a9eff;--blue-bg:rgba(74,158,255,.1);
+  --txt:#e8f0fc;--txm:#7a94b4;--txl:#3d5570;
+  --fh:'Instrument Serif',Georgia,serif;
+  --fb:'DM Sans',sans-serif;
+  --fm:'IBM Plex Mono','Courier New',monospace;
+  --r:6px;--rl:10px;
+  --sh:0 0 0 1px rgba(255,255,255,.05),0 8px 32px rgba(0,0,0,.4);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-family:var(--fb);color:var(--txt);background:var(--bg)}
+body{min-height:100vh;background:radial-gradient(ellipse 70% 40% at 50% -5%,rgba(0,212,184,.1) 0%,transparent 55%) var(--bg)}
+button{font-family:var(--fb);cursor:pointer}
+input,select{font-family:var(--fb)}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-thumb{background:var(--sf2);border-radius:2px}
+
+/* ── Nav ── */
+nav{
+  position:sticky;top:0;z-index:100;height:52px;
+  background:rgba(8,13,20,.92);backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;padding:0 24px;
+}
+.nav-logo{font-family:var(--fh);font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px}
+.nav-logo em{font-style:normal;color:var(--teal)}
+.nav-badge{font-family:var(--fm);font-size:10px;color:var(--txl);background:var(--sf2);border:1px solid var(--border);padding:2px 8px;border-radius:99px}
+.nav-badge.admin{background:rgba(74,158,255,.1);border-color:rgba(74,158,255,.25);color:var(--blue)}
+.nav-right{display:flex;align-items:center;gap:10px}
+.nav-btn{font-size:12px;font-weight:600;color:var(--txm);background:none;border:1px solid var(--border);padding:5px 14px;border-radius:var(--r);transition:all .15s}
+.nav-btn:hover{color:var(--txt);border-color:var(--borderh)}
+.nav-btn.danger{color:var(--neg);border-color:rgba(255,90,110,.25)}
+.nav-btn.danger:hover{background:var(--neg-bg)}
+
+/* ── Layout ── */
+.page{max-width:960px;margin:0 auto;padding:28px 24px 48px}
+.page-title{font-family:var(--fh);font-size:22px;font-weight:700;margin-bottom:4px}
+.page-sub{font-size:12px;color:var(--txm);margin-bottom:24px}
+
+/* ── Card ── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);box-shadow:var(--sh);margin-bottom:16px}
+.card-head{padding:13px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.card-title{font-size:13px;font-weight:700;letter-spacing:.02em}
+.card-badge{font-family:var(--fm);font-size:10px;color:var(--txl);background:var(--sf2);padding:2px 8px;border-radius:4px}
+.card-body{padding:16px}
+
+/* ── Toast ── */
+#toast-rack{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:9999;display:flex;flex-direction:column;align-items:center;gap:7px;pointer-events:none}
+.toast{font-size:12px;font-weight:600;font-family:var(--fb);padding:9px 18px;border-radius:99px;background:var(--surface);border:1px solid var(--border);color:var(--txt);box-shadow:0 4px 20px rgba(0,0,0,.35);animation:toastIn .25s cubic-bezier(.34,1.56,.64,1);pointer-events:auto;display:flex;align-items:center;gap:7px}
+.toast.ok{border-color:var(--pos);color:var(--pos);background:var(--pos-bg)}
+.toast.bad{border-color:var(--neg);color:var(--neg);background:var(--neg-bg)}
+.toast.info{border-color:var(--teal);color:var(--teal);background:var(--teal-bg)}
+@keyframes toastIn{from{opacity:0;transform:translateY(10px) scale(.92)}to{opacity:1;transform:none}}
+
+/* ── Table ── */
+.tbl{width:100%;border-collapse:collapse;font-size:12px}
+.tbl th{padding:8px 12px;text-align:left;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--txl);border-bottom:1px solid var(--border)}
+.tbl td{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.03);color:var(--txm)}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:rgba(255,255,255,.02);color:var(--txt)}
+.tbl td:first-child{color:var(--txl);font-family:var(--fm);font-size:11px}
+.tbl .uname{font-weight:700;color:var(--txt);font-family:var(--fm)}
+
+/* ── Role badge ── */
+.role-admin{font-size:10px;font-weight:700;padding:2px 9px;border-radius:99px;background:var(--blue-bg);border:1px solid rgba(74,158,255,.25);color:var(--blue)}
+.role-viewer{font-size:10px;font-weight:700;padding:2px 9px;border-radius:99px;background:var(--sf2);border:1px solid var(--border);color:var(--txm)}
+
+/* ── Form ── */
+.form-row{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end}
+.fl{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--txl);margin-bottom:6px}
+.inp{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);padding:10px 12px;font-size:13px;color:var(--txt);outline:none;transition:border-color .2s}
+.inp::placeholder{color:var(--txl)}
+.inp:focus{border-color:var(--teal)}
+select.inp{cursor:pointer}
+
+/* ── Buttons ── */
+.btn{padding:10px 18px;border-radius:var(--rl);font-size:12px;font-weight:700;border:1px solid var(--border);transition:all .15s;display:flex;align-items:center;gap:6px;white-space:nowrap}
+.btn-primary{background:linear-gradient(135deg,#00b09a,#00d4b8);color:#080d14;border-color:transparent}
+.btn-primary:hover{box-shadow:0 4px 14px rgba(0,212,184,.35)}
+.btn-danger{background:none;color:var(--neg);border-color:rgba(255,90,110,.2)}
+.btn-danger:hover{background:var(--neg-bg);border-color:var(--neg)}
+.btn-sm{padding:5px 12px;font-size:11px}
+
+/* ── Password change ── */
+.pw-row{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.03)}
+.pw-row:last-child{border-bottom:none}
+
+/* ── Stats ── */
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
+.stat{background:var(--sf2);border:1px solid var(--border);border-radius:var(--r);padding:14px;text-align:center}
+.stat-val{font-family:var(--fm);font-size:22px;font-weight:600;color:var(--teal)}
+.stat-lbl{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--txl);margin-top:3px}
+</style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav>
+  <div class="nav-logo">
+    SIAP<em>.</em>Analytics
+    <span class="nav-badge admin">Admin Panel</span>
+  </div>
+  <div class="nav-right">
+    <span id="nav-user" style="font-size:12px;color:var(--txm);font-family:var(--fm)"></span>
+    <a href="/" class="nav-btn">← Dashboard</a>
+    <a href="/auth/logout" class="nav-btn danger">Keluar</a>
+  </div>
+</nav>
+
+<div class="page">
+  <div class="page-title">Manajemen Pengguna</div>
+  <div class="page-sub">Kelola akun yang memiliki akses ke SIAP Analytics</div>
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat"><div class="stat-val" id="st-total">—</div><div class="stat-lbl">Total Akun</div></div>
+    <div class="stat"><div class="stat-val" id="st-admin">—</div><div class="stat-lbl">Admin</div></div>
+    <div class="stat"><div class="stat-val" id="st-viewer">—</div><div class="stat-lbl">Viewer</div></div>
+  </div>
+
+  <!-- Tambah pengguna -->
+  <div class="card">
+    <div class="card-head">
+      <span class="card-title">Tambah Pengguna Baru</span>
+    </div>
+    <div class="card-body">
+      <div class="form-row">
+        <div>
+          <div class="fl">Username</div>
+          <input class="inp" type="text" id="new-user" placeholder="contoh: operator1" autocomplete="off"/>
+        </div>
+        <div>
+          <div class="fl">Password</div>
+          <input class="inp" type="text" id="new-pass" placeholder="Min. 6 karakter" autocomplete="off"/>
+        </div>
+        <div>
+          <div class="fl">Role</div>
+          <select class="inp" id="new-role">
+            <option value="viewer">Viewer</option>
+            <option value="admin">Admin</option>
+          </select>
+        </div>
+      </div>
+      <div style="margin-top:12px;display:flex;gap:8px;align-items:center">
+        <button class="btn btn-primary" onclick="addUser()">
+          <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 5v14M5 12h14"/></svg>
+          Tambah Akun
+        </button>
+        <span style="font-size:11px;color:var(--txl)">
+          <strong style="color:var(--teal)">Admin</strong> = akses penuh &amp; kelola pengguna ·
+          <strong style="color:var(--txm)">Viewer</strong> = hanya analisis &amp; lihat hasil
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Daftar pengguna -->
+  <div class="card">
+    <div class="card-head">
+      <span class="card-title">Daftar Akun</span>
+      <span class="card-badge" id="user-count">memuat...</span>
+    </div>
+    <div class="card-body" style="padding:0">
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Username</th>
+            <th>Role</th>
+            <th>Dibuat</th>
+            <th>Ganti Password</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="user-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Keamanan -->
+  <div class="card">
+    <div class="card-head"><span class="card-title">Tips Keamanan</span></div>
+    <div class="card-body">
+      <ul style="font-size:12px;color:var(--txm);line-height:2;padding-left:16px">
+        <li>Segera ganti password default <code style="font-family:var(--fm);color:var(--teal);background:var(--teal-bg);padding:1px 6px;border-radius:4px">siap2025</code> setelah login pertama.</li>
+        <li>Gunakan password minimal 8 karakter, kombinasi huruf &amp; angka.</li>
+        <li>Akun <strong>Admin</strong> memiliki akses penuh termasuk menambah &amp; menghapus pengguna.</li>
+        <li>Akun <strong>Viewer</strong> hanya dapat menjalankan analisis dan melihat hasil — tidak bisa ke panel admin.</li>
+        <li>Jangan bagikan akun. Buat akun terpisah untuk setiap pengguna.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div id="toast-rack"></div>
+
+<script>
+let ME = null;
+
+async function init() {
+  const r = await fetch('/api/me');
+  if (!r.ok) { location.href='/login'; return; }
+  ME = await r.json();
+  if (ME.role !== 'admin') { location.href='/'; return; }
+  document.getElementById('nav-user').textContent = ME.username;
+  loadUsers();
+}
+
+async function loadUsers() {
+  const r = await fetch('/auth/users');
+  if (!r.ok) return;
+  const users = await r.json();
+  const tbody = document.getElementById('user-tbody');
+  tbody.innerHTML = '';
+  document.getElementById('user-count').textContent = users.length + ' akun';
+  document.getElementById('st-total').textContent = users.length;
+  document.getElementById('st-admin').textContent = users.filter(u=>u.role==='admin').length;
+  document.getElementById('st-viewer').textContent = users.filter(u=>u.role==='viewer').length;
+
+  users.forEach(u => {
+    const isSelf = u.username === ME.username;
+    tbody.innerHTML += `
+      <tr>
+        <td>${u.id}</td>
+        <td><span class="uname">${u.username}</span>${isSelf ? ' <span style="font-size:9px;color:var(--teal)">(Anda)</span>':''}</td>
+        <td><span class="role-${u.role}">${u.role === 'admin' ? 'Admin' : 'Viewer'}</span></td>
+        <td>${new Date(u.created_at).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'})}</td>
+        <td>
+          <div style="display:flex;gap:6px">
+            <input class="inp" type="text" id="pw-${u.id}" placeholder="Password baru" style="font-size:11px;padding:5px 9px;max-width:160px"/>
+            <button class="btn btn-sm" style="border-color:var(--borderh);color:var(--txm)" onclick="changePassword(${u.id})">Simpan</button>
+          </div>
+        </td>
+        <td>
+          ${isSelf ? '<span style="font-size:11px;color:var(--txl)">—</span>' :
+            `<button class="btn btn-danger btn-sm" onclick="deleteUser(${u.id},'${u.username}')">
+              <svg width="11" height="11" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+              Hapus
+            </button>`}
+        </td>
+      </tr>`;
+  });
+}
+
+async function addUser() {
+  const username = document.getElementById('new-user').value.trim();
+  const password = document.getElementById('new-pass').value.trim();
+  const role     = document.getElementById('new-role').value;
+  if (!username || !password) { toast('Username dan password wajib diisi', 'bad'); return; }
+  if (password.length < 6)   { toast('Password minimal 6 karakter', 'bad'); return; }
+
+  const r = await fetch('/auth/users', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({username, password, role}),
+  });
+  const d = await r.json();
+  if (!r.ok) { toast(d.error || 'Gagal membuat akun', 'bad'); return; }
+
+  document.getElementById('new-user').value = '';
+  document.getElementById('new-pass').value = '';
+  toast(`Akun "${username}" berhasil dibuat`, 'ok');
+  loadUsers();
+}
+
+async function deleteUser(id, username) {
+  if (!confirm(`Hapus akun "${username}"? Tindakan ini tidak bisa dibatalkan.`)) return;
+  const r = await fetch(`/auth/users/${id}`, { method:'DELETE' });
+  if (!r.ok) { const d = await r.json(); toast(d.error||'Gagal hapus', 'bad'); return; }
+  toast(`Akun "${username}" dihapus`, 'ok');
+  loadUsers();
+}
+
+async function changePassword(id) {
+  const pw = document.getElementById('pw-' + id)?.value.trim();
+  if (!pw || pw.length < 6) { toast('Password minimal 6 karakter', 'bad'); return; }
+  const r = await fetch(`/auth/users/${id}/password`, {
+    method:'PUT', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ password: pw }),
+  });
+  if (!r.ok) { const d = await r.json(); toast(d.error||'Gagal', 'bad'); return; }
+  document.getElementById('pw-' + id).value = '';
+  toast('Password berhasil diperbarui', 'ok');
+}
+
+function toast(msg, type='info', dur=3000) {
+  const rack = document.getElementById('toast-rack');
+  const t = document.createElement('div');
+  t.className = 'toast ' + type;
+  t.textContent = msg;
+  rack.appendChild(t);
+  setTimeout(() => { t.style.animation='toastIn .2s ease reverse'; setTimeout(()=>t.remove(), 200); }, dur);
+}
+
+init();
+</script>
+</body>
+</html>

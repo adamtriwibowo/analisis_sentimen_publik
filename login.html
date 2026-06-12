@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="dark">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>SIAP Analytics — Masuk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#080d14;--bg2:#0d1520;--surface:#141f2e;--sf2:#192636;
+  --border:rgba(255,255,255,.07);--borderh:rgba(255,255,255,.15);
+  --teal:#00d4b8;--teal-d:#00b09a;--teal-bg:rgba(0,212,184,.08);--teal-bx:rgba(0,212,184,.18);
+  --neg:#ff5a6e;--neg-bg:rgba(255,90,110,.1);
+  --txt:#e8f0fc;--txm:#7a94b4;--txl:#3d5570;
+  --fh:'Instrument Serif',Georgia,serif;
+  --fb:'DM Sans',sans-serif;
+  --fm:'IBM Plex Mono','Courier New',monospace;
+  --r:6px;--rl:10px;
+  --sh:0 0 0 1px rgba(255,255,255,.05),0 12px 40px rgba(0,0,0,.5);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{
+  height:100%;font-family:var(--fb);color:var(--txt);background:var(--bg);
+  display:flex;align-items:center;justify-content:center;
+}
+button{font-family:var(--fb);cursor:pointer}
+input{font-family:var(--fb)}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-thumb{background:var(--sf2);border-radius:2px}
+
+/* ── Aurora background ── */
+.aurora{
+  position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;
+}
+.ab{
+  position:absolute;border-radius:50%;
+  filter:blur(72px);
+  will-change:transform,opacity;
+  mix-blend-mode:screen;
+}
+.ab-1{
+  width:780px;height:480px;
+  background:radial-gradient(ellipse at center,rgba(0,212,184,.38) 0%,transparent 68%);
+  top:-18%;left:-8%;
+  animation:ab1 22s ease-in-out infinite;
+}
+.ab-2{
+  width:620px;height:720px;
+  background:radial-gradient(ellipse at center,rgba(74,158,255,.28) 0%,transparent 65%);
+  top:-25%;right:5%;
+  animation:ab2 28s ease-in-out infinite;
+}
+.ab-3{
+  width:700px;height:420px;
+  background:radial-gradient(ellipse at center,rgba(99,102,241,.22) 0%,transparent 65%);
+  bottom:5%;left:25%;
+  animation:ab3 24s ease-in-out infinite;
+}
+.ab-4{
+  width:500px;height:580px;
+  background:radial-gradient(ellipse at center,rgba(0,176,154,.18) 0%,transparent 68%);
+  top:25%;right:-12%;
+  animation:ab4 32s ease-in-out infinite;
+}
+.ab-5{
+  width:420px;height:420px;
+  background:radial-gradient(ellipse at center,rgba(139,92,246,.16) 0%,transparent 65%);
+  bottom:-12%;left:8%;
+  animation:ab5 20s ease-in-out infinite;
+}
+
+@keyframes ab1{
+  0%,100%{transform:translate(0px,0px) scale(1) rotate(0deg);opacity:1}
+  25%{transform:translate(90px,70px) scale(1.12) rotate(12deg);opacity:.85}
+  50%{transform:translate(30px,140px) scale(.96) rotate(-8deg);opacity:1}
+  75%{transform:translate(-60px,50px) scale(1.06) rotate(5deg);opacity:.9}
+}
+@keyframes ab2{
+  0%,100%{transform:translate(0px,0px) scale(1) rotate(0deg);opacity:1}
+  20%{transform:translate(-110px,60px) scale(1.18) rotate(-18deg);opacity:.8}
+  45%{transform:translate(50px,130px) scale(.92) rotate(8deg);opacity:1}
+  70%{transform:translate(-40px,20px) scale(1.08) rotate(-4deg);opacity:.88}
+}
+@keyframes ab3{
+  0%,100%{transform:translate(0px,0px) scale(1);opacity:.9}
+  33%{transform:translate(70px,-60px) scale(1.14) rotate(10deg);opacity:1}
+  66%{transform:translate(-80px,40px) scale(.94) rotate(-7deg);opacity:.85}
+}
+@keyframes ab4{
+  0%,100%{transform:translate(0px,0px) scale(1);opacity:.8}
+  30%{transform:translate(-60px,90px) scale(1.1) rotate(-15deg);opacity:1}
+  60%{transform:translate(40px,-50px) scale(.9) rotate(8deg);opacity:.85}
+}
+@keyframes ab5{
+  0%,100%{transform:translate(0px,0px) scale(1) rotate(0deg);opacity:.75}
+  40%{transform:translate(100px,-40px) scale(1.2) rotate(20deg);opacity:1}
+  80%{transform:translate(-30px,70px) scale(.88) rotate(-12deg);opacity:.8}
+}
+
+/* ── Glowing animated border ── */
+.card-glow{
+  position:relative;
+  border-radius:18px;
+  padding:1.5px;
+  overflow:hidden;
+  animation:glow-pulse 3.5s ease-in-out infinite;
+}
+.card-glow::before{
+  content:'';
+  position:absolute;
+  inset:-120%;
+  background:conic-gradient(
+    from 0deg,
+    #00d4b8 0deg,
+    #4a9eff 80deg,
+    #6366f1 160deg,
+    #8b5cf6 210deg,
+    #00b09a 280deg,
+    #00d4b8 360deg
+  );
+  animation:rotate-border 5s linear infinite;
+  z-index:0;
+}
+.card-glow::after{
+  content:'';
+  position:absolute;
+  inset:1.5px;
+  background:var(--surface);
+  border-radius:16px;
+  z-index:1;
+}
+@keyframes rotate-border{
+  from{transform:rotate(0deg)}
+  to{transform:rotate(360deg)}
+}
+@keyframes glow-pulse{
+  0%,100%{box-shadow:0 0 28px rgba(0,212,184,.22),0 0 60px rgba(0,212,184,.08),0 12px 40px rgba(0,0,0,.5)}
+  50%{box-shadow:0 0 52px rgba(0,212,184,.42),0 0 100px rgba(74,158,255,.18),0 12px 40px rgba(0,0,0,.5)}
+}
+
+/* ── Card ── */
+.login-wrap{
+  position:relative;z-index:1;
+  width:100%;max-width:400px;padding:0 20px;
+  animation:fadeUp .35s cubic-bezier(.34,1.3,.64,1);
+}
+@keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+
+.brand{text-align:center;margin-bottom:24px}
+.brand-logo{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:52px;height:52px;border-radius:14px;
+  background:linear-gradient(135deg,#00b09a,#00d4b8);
+  font-family:var(--fh);font-size:18px;font-weight:800;color:#080d14;
+  margin-bottom:12px;box-shadow:0 6px 24px rgba(0,212,184,.3);
+}
+.brand h1{font-family:var(--fh);font-size:22px;font-weight:700;letter-spacing:.01em}
+.brand h1 em{font-style:normal;color:var(--teal)}
+.brand p{font-size:12px;color:var(--txm);margin-top:4px}
+
+.card{
+  position:relative;z-index:2;
+  background:var(--surface);border:none;
+  border-radius:16px;padding:28px 28px 24px;
+}
+
+.fl{font-family:var(--fb);font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--txl);margin-bottom:7px}
+
+.inp-wrap{position:relative;margin-bottom:14px}
+.inp-icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--txl);pointer-events:none}
+.inp{
+  width:100%;background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--rl);padding:11px 12px 11px 36px;
+  font-size:13px;color:var(--txt);outline:none;transition:border-color .2s;
+}
+.inp::placeholder{color:var(--txl)}
+.inp:focus{border-color:var(--teal)}
+.inp-toggle{
+  position:absolute;right:10px;top:50%;transform:translateY(-50%);
+  background:none;border:none;color:var(--txl);padding:4px;
+  font-size:13px;transition:color .15s;
+}
+.inp-toggle:hover{color:var(--txm)}
+
+.btn-login{
+  width:100%;margin-top:6px;
+  background:linear-gradient(135deg,#00b09a,#00d4b8);
+  color:#080d14;border:none;border-radius:var(--rl);
+  padding:13px;font-size:14px;font-weight:700;letter-spacing:.04em;
+  box-shadow:0 4px 20px rgba(0,212,184,.3);transition:all .2s;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.btn-login:hover{transform:translateY(-1px);box-shadow:0 6px 28px rgba(0,212,184,.45)}
+.btn-login:active{transform:translateY(0)}
+.btn-login:disabled{opacity:.45;transform:none;cursor:not-allowed}
+
+/* ── Error alert ── */
+.err-box{
+  display:flex;align-items:flex-start;gap:9px;
+  background:var(--neg-bg);border:1px solid rgba(255,90,110,.25);
+  border-radius:var(--rl);padding:10px 12px;margin-bottom:14px;
+  font-size:12px;color:var(--neg);line-height:1.5;
+}
+.err-box svg{flex-shrink:0;margin-top:1px}
+
+/* ── Divider ── */
+.divider{height:1px;background:var(--border);margin:16px 0}
+
+/* ── Info box ── */
+.info-box{
+  background:var(--teal-bg);border:1px solid var(--teal-bx);
+  border-radius:var(--r);padding:10px 12px;
+  font-size:11px;color:var(--txm);line-height:1.6;
+}
+.info-box strong{color:var(--teal)}
+
+/* ── Footer ── */
+.login-foot{
+  text-align:center;margin-top:16px;
+  font-family:var(--fm);font-size:10px;color:var(--txl);letter-spacing:.06em;
+}
+</style>
+</head>
+<body>
+
+<!-- Aurora background -->
+<div class="aurora" aria-hidden="true">
+  <div class="ab ab-1"></div>
+  <div class="ab ab-2"></div>
+  <div class="ab ab-3"></div>
+  <div class="ab ab-4"></div>
+  <div class="ab ab-5"></div>
+</div>
+
+<div class="login-wrap">
+  <div class="brand">
+    <div class="brand-logo">SA</div>
+    <h1>SIAP<em>.</em>Analytics</h1>
+    <p>Sistem Analisis Sentimen Publik · IndoBERT v2.3</p>
+  </div>
+
+  <div class="card-glow">
+  <div class="card">
+    <!-- Error (shown via JS dari URL param) -->
+    <div class="err-box" id="err-box" style="display:none">
+      <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01"/></svg>
+      <span id="err-msg">Username atau password salah.</span>
+    </div>
+
+    <form method="POST" action="/auth/login" id="login-form" autocomplete="on">
+      <!-- Username -->
+      <div class="fl">Username</div>
+      <div class="inp-wrap">
+        <svg class="inp-icon" width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8z"/></svg>
+        <input class="inp" type="text" name="username" id="username" placeholder="Masukkan username" autocomplete="username" required/>
+      </div>
+
+      <!-- Password -->
+      <div class="fl">Password</div>
+      <div class="inp-wrap">
+        <svg class="inp-icon" width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" stroke-width="2"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11V7a5 5 0 0110 0v4"/></svg>
+        <input class="inp" type="password" name="password" id="password" placeholder="Masukkan password" autocomplete="current-password" required/>
+        <button type="button" class="inp-toggle" id="toggle-pw" onclick="togglePw()">👁</button>
+      </div>
+
+      <!-- Ingat saya -->
+      <label style="display:flex;align-items:center;gap:7px;font-size:12px;color:var(--txm);margin-bottom:14px;cursor:pointer">
+        <input type="checkbox" name="remember" value="1" style="accent-color:var(--teal);width:13px;height:13px"/>
+        Ingat saya selama 30 hari
+      </label>
+
+      <button type="submit" class="btn-login" id="btn-login">
+        <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>
+        Masuk ke Dashboard
+      </button>
+    </form>
+
+    <div class="divider"></div>
+
+    <div class="info-box">
+      Akses terbatas untuk pengguna yang berwenang.<br>
+      Hubungi <strong>administrator</strong> untuk mendapatkan akun.
+    </div>
+  </div>
+  </div><!-- /card-glow -->
+
+  <div class="login-foot">SIAP Analytics v2.3 · IndoBERT-SA · © 2025</div>
+</div>
+
+<script>
+// Tampilkan error dari URL param
+const p = new URLSearchParams(location.search);
+if (p.get('error')) {
+  const box = document.getElementById('err-box');
+  const msg = document.getElementById('err-msg');
+  box.style.display = 'flex';
+  const errs = {
+    'invalid': 'Username atau password salah. Periksa kembali.',
+    'inactive': 'Akun Anda tidak aktif. Hubungi administrator.',
+    'required': 'Username dan password wajib diisi.',
+  };
+  msg.textContent = errs[p.get('error')] || 'Login gagal. Coba lagi.';
+}
+
+// Toggle password visibility
+function togglePw() {
+  const inp = document.getElementById('password');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+}
+
+// Loading state saat submit
+document.getElementById('login-form').addEventListener('submit', function() {
+  const btn = document.getElementById('btn-login');
+  btn.disabled = true;
+  btn.innerHTML = `<svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="animation:spin .7s linear infinite"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg> Memverifikasi...`;
+});
+
+// Fokus ke username otomatis
+document.getElementById('username').focus();
+</script>
+<style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+</body>
+</html>

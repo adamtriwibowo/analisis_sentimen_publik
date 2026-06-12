@@ -1,8 +1,10 @@
 # SIAP Analytics — Dependencies
 # Install: pip install -r requirements.txt
 
-# Web server
+# Web server & autentikasi
 flask>=3.0.0
+flask-login>=0.6.3
+werkzeug>=3.0.0
 
 # Scraper Twitter/X
 twscrape>=0.14.0
