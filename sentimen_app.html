@@ -1529,6 +1529,9 @@ async function startAnalysis() {
 
   document.getElementById('proc-kw-label').textContent = '"' + APP.keywords.join(' + ') + '"';
 
+  // Reset riwayat chatbot untuk analisis baru
+  if (typeof SBOT !== 'undefined' && SBOT.reset) SBOT.reset(APP.keywords);
+
   // Reset tampilan processing
   document.querySelectorAll('.proc-step').forEach(s => {
     s.className = 'proc-step';
@@ -2093,9 +2096,7 @@ const SBOT = (() => {
 
   /* ── Cek ketersediaan hasil ── */
   function getR() {
-    const R = window.APP ? window.APP.results : null;
-    const onResults = document.getElementById('screen-results')?.classList.contains('active');
-    return (R && onResults) ? R : null;
+    return (typeof APP !== 'undefined' && APP.results) ? APP.results : null;
   }
   function noData() { return 'Belum ada hasil analisis. Silakan mulai pencarian kata kunci dulu ya!'; }
 
@@ -2156,8 +2157,8 @@ const SBOT = (() => {
     const R = getR(); if (!R) return noData();
     const words = R.wcWords || [];
     if (!words.length) return 'Data kata populer tidak tersedia.';
-    const top10 = words.slice(0, 10);
-    const lines = top10.map((w,i) => `${i+1}. **${w.text}** (${w.value}×)`).join('\n');
+    const top10 = [...words].sort((a,b) => b.weight - a.weight).slice(0, 10);
+    const lines = top10.map((w,i) => `${i+1}. **${w.w}** (${w.weight}×)`).join('\n');
     return `Kata yang paling sering muncul dalam data:\n\n${lines}`;
   }
 
@@ -2314,10 +2315,19 @@ const SBOT = (() => {
     }
   }
 
+  function reset(newKeywords) {
+    const msgs = document.getElementById('sbot-msgs');
+    const chips = document.getElementById('sbot-chips');
+    if (msgs) msgs.innerHTML = '';
+    if (chips) chips.innerHTML = '';
+    const kw = newKeywords && newKeywords.length ? `**${newKeywords.join(' + ')}**` : 'baru';
+    appendMsg(`Analisis ${kw} dimulai. Tanya saya hasil, trend, platform, atau rekomendasi setelah selesai! 🔍`, 'bot');
+  }
+
   return { toggle, send: () => {
     const inp = document.getElementById('sbot-input');
     processInput(inp.value);
-  }, open };
+  }, open, reset };
 })();
 
 function sbotToggle() {
