@@ -1116,23 +1116,6 @@ html[data-theme="light"] .proc-card{
   .sbot-panel{right:10px;left:10px;width:auto;bottom:80px}
   .sbot-fab{bottom:18px;right:18px}
 }
-
-/* ══════════════════════════════════════
-   SOFT AURORA — search-card background
-   ══════════════════════════════════════ */
-#search-aurora{
-  position:absolute;inset:0;border-radius:14px;
-  overflow:hidden;pointer-events:none;z-index:0;
-  mix-blend-mode:screen;opacity:.55;
-  transition:opacity .4s ease;
-}
-#search-aurora canvas{
-  display:block;width:100%!important;height:100%!important;
-}
-/* Lift card content above aurora layer */
-.search-card > *:not(#search-aurora):not(.edge-light){
-  position:relative;z-index:1;
-}
 </style>
 </head>
 <body>
@@ -1170,7 +1153,6 @@ html[data-theme="light"] .proc-card{
       <p>Masukkan kata kunci, pilih sumber data, dan dapatkan laporan sentimen berbasis AI dalam hitungan detik.</p>
     </div>
     <div class="search-card">
-      <div id="search-aurora" aria-hidden="true"></div>
       <span class="edge-light" aria-hidden="true"></span>
       <!-- Keyword -->
       <div class="fl">Kata Kunci Monitor</div>
@@ -1964,229 +1946,6 @@ function toggleTheme() {
 })();
 
 /* ══════════════════════════════════════════════════════════
-   SOFT AURORA — WebGL shader background for search-card
-   Ported from ReactBits SoftAurora (vanilla JS, raw WebGL)
-   ══════════════════════════════════════════════════════════ */
-(function() {
-  const VERT = `
-attribute vec2 position;
-attribute vec2 uv;
-varying vec2 vUv;
-void main(){vUv=uv;gl_Position=vec4(position,0.0,1.0);}`;
-
-  const FRAG = `
-precision highp float;
-uniform float uTime;
-uniform vec3  uResolution;
-uniform float uSpeed,uScale,uBrightness;
-uniform vec3  uColor1,uColor2;
-uniform float uNoiseFreq,uNoiseAmp,uBandHeight,uBandSpread,uOctaveDecay,uLayerOffset,uColorSpeed;
-uniform vec2  uMouse;
-uniform float uMouseInfluence;
-uniform bool  uEnableMouse;
-#define TAU 6.28318
-
-vec3 gradientHash(vec3 p){
-  p=vec3(dot(p,vec3(127.1,311.7,234.6)),dot(p,vec3(269.5,183.3,198.3)),dot(p,vec3(169.5,283.3,156.9)));
-  vec3 h=fract(sin(p)*43758.5453123);
-  float phi=acos(2.0*h.x-1.0),theta=TAU*h.y;
-  return vec3(cos(theta)*sin(phi),sin(theta)*cos(phi),cos(phi));
-}
-float quinticSmooth(float t){float t2=t*t,t3=t*t2;return 6.0*t3*t2-15.0*t2*t2+10.0*t3;}
-vec3 cosineGradient(float t,vec3 a,vec3 b,vec3 c,vec3 d){return a+b*cos(TAU*(c*t+d));}
-
-float perlin3D(float amplitude,float frequency,float px,float py,float pz){
-  float x=px*frequency,y=py*frequency;
-  float fx=floor(x),fy=floor(y),fz=floor(pz);
-  float cx=ceil(x), cy=ceil(y), cz=ceil(pz);
-  vec3 g000=gradientHash(vec3(fx,fy,fz)),g100=gradientHash(vec3(cx,fy,fz));
-  vec3 g010=gradientHash(vec3(fx,cy,fz)),g110=gradientHash(vec3(cx,cy,fz));
-  vec3 g001=gradientHash(vec3(fx,fy,cz)),g101=gradientHash(vec3(cx,fy,cz));
-  vec3 g011=gradientHash(vec3(fx,cy,cz)),g111=gradientHash(vec3(cx,cy,cz));
-  float d000=dot(g000,vec3(x-fx,y-fy,pz-fz)),d100=dot(g100,vec3(x-cx,y-fy,pz-fz));
-  float d010=dot(g010,vec3(x-fx,y-cy,pz-fz)),d110=dot(g110,vec3(x-cx,y-cy,pz-fz));
-  float d001=dot(g001,vec3(x-fx,y-fy,pz-cz)),d101=dot(g101,vec3(x-cx,y-fy,pz-cz));
-  float d011=dot(g011,vec3(x-fx,y-cy,pz-cz)),d111=dot(g111,vec3(x-cx,y-cy,pz-cz));
-  float sx=quinticSmooth(x-fx),sy=quinticSmooth(y-fy),sz=quinticSmooth(pz-fz);
-  float lx00=mix(d000,d100,sx),lx10=mix(d010,d110,sx);
-  float lx01=mix(d001,d101,sx),lx11=mix(d011,d111,sx);
-  float ly0=mix(lx00,lx10,sy),ly1=mix(lx01,lx11,sy);
-  return amplitude*mix(ly0,ly1,sz);
-}
-
-float auroraGlow(float t,vec2 shift){
-  vec2 uv=gl_FragCoord.xy/uResolution.y+shift;
-  float noiseVal=0.0,freq=uNoiseFreq,amp=uNoiseAmp;
-  vec2 sp=uv*uScale;
-  for(float i=0.0;i<3.0;i+=1.0){
-    noiseVal+=perlin3D(amp,freq,sp.x,sp.y,t);
-    amp*=uOctaveDecay;freq*=2.0;
-  }
-  float yBand=uv.y*10.0-uBandHeight*10.0;
-  return 0.3*max(exp(uBandSpread*(1.0-1.1*abs(noiseVal+yBand))),0.0);
-}
-
-void main(){
-  vec2 uv=gl_FragCoord.xy/uResolution.xy;
-  float t=uSpeed*0.4*uTime;
-  vec2 shift=vec2(0.0);
-  if(uEnableMouse)shift=(uMouse-0.5)*uMouseInfluence;
-  vec3 col=vec3(0.0);
-  col+=0.99*auroraGlow(t,shift)*cosineGradient(uv.x+uTime*uSpeed*0.2*uColorSpeed,vec3(0.5),vec3(0.5),vec3(1.0),vec3(0.3,0.20,0.20))*uColor1;
-  col+=0.99*auroraGlow(t+uLayerOffset,shift)*cosineGradient(uv.x+uTime*uSpeed*0.1*uColorSpeed,vec3(0.5),vec3(0.5),vec3(2.0,1.0,0.0),vec3(0.5,0.20,0.25))*uColor2;
-  col*=uBrightness;
-  float alpha=clamp(length(col),0.0,1.0);
-  gl_FragColor=vec4(col,alpha);
-}`;
-
-  function hex3(h) {
-    const c = h.replace('#','');
-    return [parseInt(c.slice(0,2),16)/255, parseInt(c.slice(2,4),16)/255, parseInt(c.slice(4,6),16)/255];
-  }
-
-  function compileShader(gl, type, src) {
-    const s = gl.createShader(type);
-    gl.shaderSource(s, src); gl.compileShader(s);
-    return s;
-  }
-
-  class SoftAurora {
-    constructor(container, opts) {
-      this.container = container;
-      this.o = opts;
-      this.raf = null;
-      this.cur = [0.5, 0.5];
-      this.tgt = [0.5, 0.5];
-      this._init();
-    }
-
-    _init() {
-      const canvas = document.createElement('canvas');
-      this.canvas = canvas;
-      const gl = canvas.getContext('webgl', { alpha:true, premultipliedAlpha:false });
-      if (!gl) return;
-      this.gl = gl;
-      gl.clearColor(0,0,0,0);
-
-      const vs = compileShader(gl, gl.VERTEX_SHADER,   VERT);
-      const fs = compileShader(gl, gl.FRAGMENT_SHADER, FRAG);
-      const prog = gl.createProgram();
-      gl.attachShader(prog, vs); gl.attachShader(prog, fs);
-      gl.linkProgram(prog); gl.useProgram(prog);
-      this.prog = prog;
-
-      // Full-screen triangle (OGL Triangle equivalent)
-      const pos = new Float32Array([-1,-1, 3,-1, -1,3]);
-      const uvs = new Float32Array([0,0, 2,0, 0,2]);
-      const bindBuf = (data, name, size) => {
-        const buf = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, buf);
-        gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
-        const loc = gl.getAttribLocation(prog, name);
-        gl.enableVertexAttribArray(loc);
-        gl.vertexAttribPointer(loc, size, gl.FLOAT, false, 0, 0);
-      };
-      bindBuf(pos, 'position', 2);
-      bindBuf(uvs, 'uv', 2);
-
-      // Cache uniform locations
-      const U = {};
-      ['uTime','uResolution','uSpeed','uScale','uBrightness','uColor1','uColor2',
-       'uNoiseFreq','uNoiseAmp','uBandHeight','uBandSpread','uOctaveDecay',
-       'uLayerOffset','uColorSpeed','uMouse','uMouseInfluence','uEnableMouse'
-      ].forEach(n => U[n] = gl.getUniformLocation(prog, n));
-      this.U = U;
-
-      // Static uniforms
-      const o = this.o;
-      gl.uniform1f(U.uSpeed,          o.speed);
-      gl.uniform1f(U.uScale,          o.scale);
-      gl.uniform1f(U.uBrightness,     o.brightness);
-      gl.uniform3fv(U.uColor1,        hex3(o.color1));
-      gl.uniform3fv(U.uColor2,        hex3(o.color2));
-      gl.uniform1f(U.uNoiseFreq,      o.noiseFrequency);
-      gl.uniform1f(U.uNoiseAmp,       o.noiseAmplitude);
-      gl.uniform1f(U.uBandHeight,     o.bandHeight);
-      gl.uniform1f(U.uBandSpread,     o.bandSpread);
-      gl.uniform1f(U.uOctaveDecay,    o.octaveDecay);
-      gl.uniform1f(U.uLayerOffset,    o.layerOffset);
-      gl.uniform1f(U.uColorSpeed,     o.colorSpeed);
-      gl.uniform1f(U.uMouseInfluence, o.mouseInfluence);
-      gl.uniform1i(U.uEnableMouse,    o.enableMouseInteraction ? 1 : 0);
-
-      container.appendChild(canvas);
-
-      // ResizeObserver
-      this._ro = new ResizeObserver(() => this._resize());
-      this._ro.observe(container);
-      this._resize();
-
-      // Mouse
-      if (o.enableMouseInteraction) {
-        this._mv = e => {
-          const r = canvas.getBoundingClientRect();
-          this.tgt = [(e.clientX-r.left)/r.width, 1-(e.clientY-r.top)/r.height];
-        };
-        this._ml = () => { this.tgt = [0.5, 0.5]; };
-        canvas.addEventListener('mousemove', this._mv);
-        canvas.addEventListener('mouseleave', this._ml);
-      }
-      this._loop(0);
-    }
-
-    _resize() {
-      const w = this.container.offsetWidth || 400;
-      const h = this.container.offsetHeight || 300;
-      this.canvas.width = w; this.canvas.height = h;
-      this.gl.viewport(0, 0, w, h);
-      this.gl.uniform3f(this.U.uResolution, w, h, w/h);
-    }
-
-    _loop(t) {
-      const gl = this.gl;
-      gl.clear(gl.COLOR_BUFFER_BIT);
-      gl.uniform1f(this.U.uTime, t * 0.001);
-
-      this.cur[0] += 0.05 * (this.tgt[0] - this.cur[0]);
-      this.cur[1] += 0.05 * (this.tgt[1] - this.cur[1]);
-      gl.uniform2fv(this.U.uMouse, this.cur);
-      gl.drawArrays(gl.TRIANGLES, 0, 3);
-      this.raf = requestAnimationFrame(t => this._loop(t));
-    }
-
-    destroy() {
-      if (this.raf) cancelAnimationFrame(this.raf);
-      if (this._ro) this._ro.disconnect();
-      if (this.canvas) {
-        if (this._mv) { this.canvas.removeEventListener('mousemove', this._mv); this.canvas.removeEventListener('mouseleave', this._ml); }
-        this.canvas.parentNode?.removeChild(this.canvas);
-      }
-      this.gl?.getExtension('WEBGL_lose_context')?.loseContext();
-    }
-  }
-
-  // Instantiate on search-card with SIAP Analytics palette
-  const wrap = document.getElementById('search-aurora');
-  if (!wrap) return;
-  new SoftAurora(wrap, {
-    speed:               0.45,
-    scale:               1.3,
-    brightness:          1.1,
-    color1:              '#00d4b8',  // teal
-    color2:              '#4a9eff',  // blue
-    noiseFrequency:      2.2,
-    noiseAmplitude:      0.9,
-    bandHeight:          0.42,
-    bandSpread:          1.3,
-    octaveDecay:         0.5,
-    layerOffset:         1.8,
-    colorSpeed:          0.7,
-    enableMouseInteraction: true,
-    mouseInfluence:      0.18,
-  });
-})();
-
-/* ══════════════════════════════════════════════════════════
    SIAP BOT — nlp.js chatbot (lazy-loaded dari CDN)
    ══════════════════════════════════════════════════════════ */
 const SBOT = (() => {
@@ -2224,57 +1983,45 @@ const SBOT = (() => {
 
   /* ── Answers (array → picked randomly) ── */
   const ANSWERS = {
-    greeting: [
-      'Halo! Saya SIAP Bot, asisten analisis sentimen Anda. Ada yang bisa saya bantu? 👋',
-      'Hai! Siap membantu Anda menganalisis sentimen publik. Ketik **bantuan** untuk melihat fitur saya.',
-    ],
-    farewell: [
-      'Sampai jumpa! Semoga analisis sentimennya bermanfaat. 👋',
-      'Terima kasih sudah menggunakan SIAP Analytics. Sampai jumpa!',
-    ],
-    help: [
-      `Saya bisa membantu Anda dengan:\n\n• **Cari** — mulai analisis kata kunci baru\n• **Lihat hasil** — ringkasan hasil analisis\n• **Export CSV / PDF** — unduh data\n• **Ganti tema** — dark/light mode\n• **Jelaskan** — cara kerja IndoBERT & sentimen\n\nCoba ketik salah satu di atas!`,
-    ],
-    about: [
-      'SIAP Analytics adalah dashboard analisis sentimen publik berbasis **IndoBERT** — model NLP bahasa Indonesia dari HuggingFace. Data diambil dari Twitter/X, media online, dan Instagram, lalu diklasifikasikan menjadi Positif, Netral, atau Negatif.',
-    ],
-    'nav.search': [
-      'Baik, kembali ke halaman pencarian!',
-    ],
-    'export.csv': [
-      'Mengunduh data CSV sekarang...',
-    ],
-    'export.pdf': [
-      'Menyiapkan laporan PDF...',
-    ],
-    theme: [
-      'Mengubah tema tampilan!',
-    ],
-    'explain.sentiment': [
-      'Analisis sentimen adalah proses menentukan apakah sebuah teks mengungkapkan opini **positif**, **negatif**, atau **netral**. SIAP Analytics menggunakan IndoBERT yang sudah fine-tuned khusus untuk teks Bahasa Indonesia.',
-    ],
-    'explain.model': [
-      'IndoBERT adalah model **BERT** yang telah di-pretrain pada korpus Bahasa Indonesia dan fine-tuned untuk klasifikasi sentimen 3 kelas. Model ini diakses via library `transformers` dari HuggingFace dan dijalankan di server Flask lokal.',
-    ],
-    'suggest.keyword': [
-      'Beberapa topik populer untuk dianalisis:\n\n• **PPKM** — kebijakan pembatasan kegiatan\n• **Prabowo** — opini tentang presiden\n• **Harga BBM** — reaksi kenaikan harga\n• **KPK** — persepsi anti-korupsi\n• **BPJS** — layanan kesehatan',
-    ],
-    'results.ask': null, // dynamic
-    search: null,        // dynamic
-    none: [
-      'Maaf, saya kurang paham. Coba ketik **bantuan** untuk melihat apa yang bisa saya lakukan.',
-      'Hmm, saya belum mengerti pertanyaan itu. Ketik **bantuan** ya!',
-    ],
+    greeting:           ['Halo! Saya **SIAP Bot**, asisten analisis sentimen Anda. 👋','Hai! Siap membantu menganalisis sentimen publik. Ketik **bantuan** untuk lihat fitur saya.'],
+    farewell:           ['Sampai jumpa! Semoga analisis sentimennya bermanfaat. 👋','Terima kasih sudah menggunakan SIAP Analytics!'],
+    help:               ['Saya bisa membantu:\n\n• **Ringkasan hasil** — sentimen & statistik\n• **Platform** — sumber data paling aktif\n• **Trend** — kapan sentimen paling tinggi\n• **Contoh mention** — positif & negatif\n• **Kata populer** — kata yang sering muncul\n• **Rekomendasi** — saran dari sistem\n• **Export CSV/PDF** — unduh data\n• **Cari** — analisis kata kunci baru'],
+    about:              ['SIAP Analytics adalah dashboard analisis sentimen publik berbasis **IndoBERT** — model NLP bahasa Indonesia dari HuggingFace. Data dari Twitter/X, media online, dan Instagram, diklasifikasikan menjadi Positif, Netral, atau Negatif.'],
+    'nav.search':       ['Baik, kembali ke halaman pencarian!'],
+    'export.csv':       ['Mengunduh data CSV sekarang...'],
+    'export.pdf':       ['Menyiapkan laporan PDF...'],
+    theme:              ['Mengubah tema tampilan!'],
+    'explain.sentiment':['Analisis sentimen menentukan apakah teks mengungkapkan opini **positif**, **negatif**, atau **netral**. SIAP Analytics menggunakan IndoBERT yang sudah fine-tuned khusus teks Bahasa Indonesia.'],
+    'explain.model':    ['**IndoBERT** adalah model BERT yang di-pretrain pada korpus Bahasa Indonesia dan fine-tuned untuk klasifikasi sentimen 3 kelas. Diakses via `transformers` HuggingFace, dijalankan di server Flask lokal dengan akurasi **94.7%**.'],
+    'suggest.keyword':  ['Topik populer untuk dianalisis:\n\n• **PPKM** — kebijakan pembatasan\n• **Prabowo** — opini presiden\n• **Harga BBM** — reaksi kenaikan harga\n• **KPK** — persepsi anti-korupsi\n• **BPJS** — layanan kesehatan'],
+    // dynamic — diisi oleh dynamicAnswer()
+    'results.ask':       null,
+    'results.platform':  null,
+    'results.trend':     null,
+    'results.positif':   null,
+    'results.negatif':   null,
+    'results.topword':   null,
+    'results.rekomendasi':null,
+    'results.periode':   null,
+    search:              null,
+    none: ['Maaf, saya kurang paham. Ketik **bantuan** untuk melihat apa yang bisa saya lakukan.','Hmm, belum mengerti. Coba ketik **bantuan** ya!'],
   };
 
   /* ── Quick replies per intent ── */
   const CHIPS = {
-    greeting:  ['Bantuan','Cari sentimen','Jelaskan IndoBERT'],
-    help:      ['Cari PPKM','Lihat hasil','Export CSV','Ganti tema'],
-    'results.ask': ['Export CSV','Export PDF','Cari baru'],
-    'explain.sentiment': ['Jelaskan IndoBERT','Lihat hasil','Bantuan'],
-    about:     ['Bantuan','Cari sentimen','Jelaskan model'],
-    none:      ['Bantuan','Cari sentimen','Lihat hasil'],
+    greeting:              ['Bantuan','Cari sentimen','Jelaskan IndoBERT'],
+    help:                  ['Ringkasan hasil','Platform aktif','Contoh negatif','Rekomendasi'],
+    'results.ask':         ['Platform aktif','Trend sentimen','Kata populer','Rekomendasi'],
+    'results.platform':    ['Ringkasan hasil','Trend sentimen','Export CSV'],
+    'results.trend':       ['Ringkasan hasil','Contoh negatif','Kata populer'],
+    'results.positif':     ['Contoh negatif','Platform aktif','Export CSV'],
+    'results.negatif':     ['Contoh positif','Rekomendasi','Export PDF'],
+    'results.topword':     ['Ringkasan hasil','Contoh negatif','Export CSV'],
+    'results.rekomendasi': ['Export PDF','Cari baru','Platform aktif'],
+    'results.periode':     ['Ringkasan hasil','Platform aktif','Export CSV'],
+    'explain.sentiment':   ['Jelaskan IndoBERT','Lihat hasil','Bantuan'],
+    about:                 ['Bantuan','Cari sentimen','Jelaskan model'],
+    none:                  ['Bantuan','Cari sentimen','Lihat hasil'],
   };
 
   /* ── Render helpers ── */
@@ -2344,15 +2091,107 @@ const SBOT = (() => {
 
   function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
-  /* ── Build dynamic results answer ── */
-  function resultsAnswer() {
+  /* ── Cek ketersediaan hasil ── */
+  function getR() {
     const R = window.APP ? window.APP.results : null;
-    const screen = document.getElementById('screen-results');
-    const active = screen && screen.classList.contains('active');
-    if (!R || !active) return 'Belum ada hasil analisis. Silakan mulai pencarian dulu ya!';
-    const pos = R.pos || 0, neg = R.neg || 0, neu = R.neu || 0;
-    const dom = pos >= neg && pos >= neu ? `**Positif** (${pos.toFixed(1)}%)` : neg >= pos && neg >= neu ? `**Negatif** (${neg.toFixed(1)}%)` : `**Netral** (${neu.toFixed(1)}%)`;
-    return `Hasil analisis untuk **${(R.keywords||[]).join(' + ')}**:\n\n• Positif: **${pos.toFixed(1)}%**\n• Negatif: **${neg.toFixed(1)}%**\n• Netral: **${neu.toFixed(1)}%**\n\nSentimen dominan: ${dom}. Total data: **${R.total||0}** mention.`;
+    const onResults = document.getElementById('screen-results')?.classList.contains('active');
+    return (R && onResults) ? R : null;
+  }
+  function noData() { return 'Belum ada hasil analisis. Silakan mulai pencarian kata kunci dulu ya!'; }
+
+  /* ── Fungsi analitik per-topik ── */
+  function ansRingkasan() {
+    const R = getR(); if (!R) return noData();
+    const pos=R.pos||0, neg=R.neg||0, neu=R.neu||0;
+    const dom = pos>=neg&&pos>=neu ? `**Positif** (${pos}%)` : neg>=pos&&neg>=neu ? `**Negatif** (${neg}%)` : `**Netral** (${neu}%)`;
+    const posN=Math.round(R.total*pos/100), negN=Math.round(R.total*neg/100), neuN=Math.round(R.total*neu/100);
+    return `Ringkasan analisis **"${(R.keywords||[]).join(' + ')}"**:\n\n• Positif: **${pos}%** (${posN.toLocaleString('id-ID')} mention)\n• Negatif: **${neg}%** (${negN.toLocaleString('id-ID')} mention)\n• Netral: **${neu}%** (${neuN.toLocaleString('id-ID')} mention)\n\nSentimen dominan: ${dom}\nTotal data: **${(R.total||0).toLocaleString('id-ID')}** dari **${(R.sources||[]).length}** sumber.`;
+  }
+
+  function ansPlatform() {
+    const R = getR(); if (!R) return noData();
+    const srcLabel = { twitter:'Twitter/X', media_online:'Media Online', instagram:'Instagram' };
+    if (!R.srcData || !R.srcData.length) return 'Data per-platform tidak tersedia.';
+    const sorted = [...R.srcData].sort((a,b) => b.count - a.count);
+    const lines = sorted.map((s,i) => {
+      const pct = ((s.count/R.total)*100).toFixed(1);
+      const bar = '█'.repeat(Math.round(pct/5)) || '░';
+      return `${i===0?'🥇':i===1?'🥈':'🥉'} **${srcLabel[s.src]||s.src}** — ${s.count.toLocaleString('id-ID')} (${pct}%)\n   ${bar}`;
+    }).join('\n');
+    return `Distribusi data per platform:\n\n${lines}\n\nPlatform paling aktif: **${srcLabel[sorted[0].src]||sorted[0].src}**.`;
+  }
+
+  function ansTrend() {
+    const R = getR(); if (!R) return noData();
+    if (!R.trend || !R.trend.length) return 'Data trend tidak tersedia.';
+    const trend = R.trend;
+    // Cari puncak positif & negatif
+    let maxPos={val:0,idx:0}, maxNeg={val:0,idx:0};
+    trend.forEach((t,i) => {
+      if (t.pos > maxPos.val) { maxPos.val=t.pos; maxPos.idx=i; }
+      if (t.neg > maxNeg.val) { maxNeg.val=t.neg; maxNeg.idx=i; }
+    });
+    const d0 = new Date(R.dateFrom);
+    const fmtDay = i => { const d=new Date(d0); d.setDate(d.getDate()+i); return d.toLocaleDateString('id-ID',{day:'numeric',month:'short'}); };
+    const avgPos = (trend.reduce((s,t)=>s+t.pos,0)/trend.length).toFixed(1);
+    const avgNeg = (trend.reduce((s,t)=>s+t.neg,0)/trend.length).toFixed(1);
+    // Deteksi tren naik/turun di 7 hari terakhir
+    const last7 = trend.slice(-7);
+    const trendDir = last7[last7.length-1].pos - last7[0].pos;
+    const trendTxt = trendDir > 3 ? '📈 Sentimen positif **meningkat** dalam 7 hari terakhir.' : trendDir < -3 ? '📉 Sentimen positif **menurun** dalam 7 hari terakhir.' : '➡️ Sentimen relatif **stabil** dalam 7 hari terakhir.';
+    return `Analisis trend **30 hari** terakhir:\n\n• Rata-rata positif: **${avgPos}%** per hari\n• Rata-rata negatif: **${avgNeg}%** per hari\n• Puncak positif: **${maxPos.val}%** pada ${fmtDay(maxPos.idx)}\n• Puncak negatif: **${maxNeg.val}%** pada ${fmtDay(maxNeg.idx)}\n\n${trendTxt}`;
+  }
+
+  function ansContohSentimen(tipe) {
+    const R = getR(); if (!R) return noData();
+    const items = (R.mentions||[]).filter(m => m.s === tipe);
+    if (!items.length) return `Tidak ada mention ${tipe==='pos'?'positif':'negatif'} dalam data ini.`;
+    const top = items.sort((a,b) => b.cf - a.cf).slice(0, 3);
+    const label = tipe==='pos' ? 'Positif 🟢' : 'Negatif 🔴';
+    const lines = top.map((m,i) => `**${i+1}. ${m.user}** (${m.pl}, ${m.cf}% yakin)\n   _"${m.txt.length>90 ? m.txt.substring(0,90)+'…' : m.txt}"_`).join('\n\n');
+    return `Contoh mention **${label}** (kepercayaan tertinggi):\n\n${lines}`;
+  }
+
+  function ansTopWord() {
+    const R = getR(); if (!R) return noData();
+    const words = R.wcWords || [];
+    if (!words.length) return 'Data kata populer tidak tersedia.';
+    const top10 = words.slice(0, 10);
+    const lines = top10.map((w,i) => `${i+1}. **${w.text}** (${w.value}×)`).join('\n');
+    return `Kata yang paling sering muncul dalam data:\n\n${lines}`;
+  }
+
+  function ansRekomendasi() {
+    const R = getR(); if (!R) return noData();
+    const recs = R.recs || [];
+    if (!recs.length) return 'Rekomendasi belum tersedia.';
+    const lvlIcon = { high:'🔴', medium:'🟡', low:'🟢' };
+    const lines = recs.map((r,i) => `${lvlIcon[r.level]||'•'} **${r.title}**\n   ${r.text.substring(0,100)}…`).join('\n\n');
+    return `Rekomendasi dari sistem (${recs.length} item):\n\n${lines}\n\nUnduh laporan PDF untuk detail lengkap.`;
+  }
+
+  function ansPeriode() {
+    const R = getR(); if (!R) return noData();
+    const df = new Date(R.dateFrom).toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
+    const dt = new Date(R.dateTo).toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
+    const srcLabel = { twitter:'Twitter/X', media_online:'Media Online', instagram:'Instagram' };
+    const srcs = (R.sources||[]).map(s => srcLabel[s]||s).join(', ');
+    return `Detail pengumpulan data:\n\n• Kata kunci: **${(R.keywords||[]).join(', ')}**\n• Periode: **${df} — ${dt}**\n• Sumber: **${srcs}**\n• Total dokumen: **${(R.total||0).toLocaleString('id-ID')}**\n• Model: **IndoBERT-SA v2.3** (akurasi 94.7%)`;
+  }
+
+  /* ── Dispatcher dinamis ── */
+  function dynamicAnswer(intent) {
+    switch(intent) {
+      case 'results.ask':         return ansRingkasan();
+      case 'results.platform':    return ansPlatform();
+      case 'results.trend':       return ansTrend();
+      case 'results.positif':     return ansContohSentimen('pos');
+      case 'results.negatif':     return ansContohSentimen('neg');
+      case 'results.topword':     return ansTopWord();
+      case 'results.rekomendasi': return ansRekomendasi();
+      case 'results.periode':     return ansPeriode();
+      default: return null;
+    }
   }
 
   /* ── Aksi berdasarkan intent ── */
@@ -2361,7 +2200,6 @@ const SBOT = (() => {
     if (intent === 'export.csv')    { setTimeout(() => { if (typeof exportMentionCSV === 'function') exportMentionCSV(); else showToast('Tidak ada data untuk diekspor','bad'); }, 400); }
     if (intent === 'export.pdf')    { setTimeout(() => { if (typeof downloadPDF === 'function') downloadPDF(); else showToast('Tidak ada data PDF','bad'); }, 400); }
     if (intent === 'theme')         { setTimeout(toggleTheme, 300); }
-    if (intent === 'results.ask')   { /* answer is dynamic */ }
     if (intent === 'search') {
       // Coba ekstrak kata kunci dari teks
       const stopwords = ['cari','analisis','sentimen','tentang','cek','lacak','pantau','analisa'];
@@ -2386,7 +2224,14 @@ const SBOT = (() => {
     { intent:'about',           min:2, kw:{'tentang':2,'siap analytics':3,'aplikasi ini':3,'apa ini':3,'sistem ini':3,'deskripsi':2,'info':1,'profil':1} },
     { intent:'search',          min:3, kw:{'cari':3,'analisis':2,'sentimen tentang':3,'cek':2,'lacak':2,'pantau':2,'mulai':1,'kata kunci':2,'topik':2,'analisa':2,'tracking':2} },
     { intent:'nav.search',      min:2, kw:{'kembali':2,'pencarian baru':3,'halaman awal':3,'reset':3,'mulai ulang':3,'back':2,'baru':2,'pencarian':2} },
-    { intent:'results.ask',     min:2, kw:{'hasil':2,'lihat hasil':3,'bagaimana hasilnya':3,'statistik':2,'ringkasan':2,'berapa persen':3,'sentimen apa':3,'positif':1,'negatif':1,'netral':1,'summary':2} },
+    { intent:'results.ask',         min:2, kw:{'hasil':2,'lihat hasil':3,'bagaimana hasilnya':3,'statistik':2,'ringkasan':2,'berapa persen':3,'sentimen apa':3,'summary':2,'overview':2,'kesimpulan':2} },
+    { intent:'results.platform',    min:2, kw:{'platform':3,'twitter':2,'instagram':2,'media online':2,'sumber':2,'paling aktif':3,'distribusi':2,'channel':2,'dari mana':2} },
+    { intent:'results.trend',       min:2, kw:{'trend':3,'tren':3,'kapan':2,'waktu':2,'hari':1,'puncak':3,'naik':2,'turun':2,'grafik':2,'perubahan':2,'fluktuasi':2} },
+    { intent:'results.positif',     min:2, kw:{'contoh positif':3,'mention positif':3,'tweet positif':3,'yang positif':3,'positif apa':3,'komentar positif':3} },
+    { intent:'results.negatif',     min:2, kw:{'contoh negatif':3,'mention negatif':3,'tweet negatif':3,'yang negatif':3,'negatif apa':3,'komentar negatif':3,'kritik':2} },
+    { intent:'results.topword',     min:2, kw:{'kata':2,'kata populer':3,'kata sering':3,'word cloud':3,'kata kunci':2,'topik':2,'frasa':2,'frekuensi':2,'sering muncul':3} },
+    { intent:'results.rekomendasi', min:2, kw:{'rekomendasi':3,'saran':3,'solusi':2,'tindakan':2,'apa yang harus':3,'langkah':2,'strategi':2,'kebijakan':2} },
+    { intent:'results.periode',     min:2, kw:{'periode':3,'tanggal':2,'dari kapan':3,'kapan data':3,'rentang':2,'waktu analisis':3,'durasi':2} },
     { intent:'export.csv',      min:2, kw:{'csv':3,'download data':3,'unduh data':3,'ekspor data':3,'export data':3,'simpan':2,'mentions':2,'tabel':1} },
     { intent:'export.pdf',      min:2, kw:{'pdf':3,'unduh laporan':3,'cetak':3,'laporan':2,'download pdf':3,'export pdf':3,'print':2} },
     { intent:'theme',           min:2, kw:{'tema':2,'dark':2,'light':2,'mode gelap':3,'mode terang':3,'ganti tema':3,'ubah tema':3,'switch':2,'terang':1,'gelap':1} },
@@ -2422,13 +2267,17 @@ const SBOT = (() => {
 
     const { intent } = classify(text);
 
+    const dynReply = dynamicAnswer(intent);
     let reply;
-    if (intent === 'results.ask') {
-      reply = resultsAnswer();
+    if (dynReply !== null) {
+      reply = dynReply;
+    } else if (intent === 'search') {
+      reply = null; // handled in executeAction
     } else {
       const pool = ANSWERS[intent] || ANSWERS.none;
       reply = pick(pool);
     }
+    if (reply === null) reply = pick(ANSWERS.none);
 
     appendMsg(reply, 'bot');
     setChips(CHIPS[intent] || []);
