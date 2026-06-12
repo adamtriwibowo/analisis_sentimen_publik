@@ -943,6 +943,179 @@ html[data-theme="light"] .proc-card{
   .card-body{ padding:10px; }
   .search-card{ padding:16px; }
 }
+
+/* ══════════════════════════════════════
+   SIAP BOT — Chatbot UI
+   ══════════════════════════════════════ */
+
+/* ── FAB button ── */
+.sbot-fab{
+  position:fixed;bottom:28px;right:28px;z-index:9000;
+  width:54px;height:54px;border-radius:50%;border:none;cursor:pointer;
+  background:linear-gradient(135deg,#00b09a,#00d4b8);
+  box-shadow:0 4px 20px rgba(0,212,184,.45),0 2px 8px rgba(0,0,0,.4);
+  display:flex;align-items:center;justify-content:center;
+  transition:transform .2s cubic-bezier(.34,1.5,.64,1),box-shadow .2s;
+  color:#080d14;
+}
+.sbot-fab:hover{transform:scale(1.1);box-shadow:0 6px 28px rgba(0,212,184,.6)}
+.sbot-fab.open{transform:scale(1.05)}
+.sbot-fab svg{transition:opacity .2s,transform .2s}
+.sbot-fab .ico-chat{position:absolute}
+.sbot-fab .ico-close{position:absolute;opacity:0;transform:rotate(-90deg)}
+.sbot-fab.open .ico-chat{opacity:0;transform:rotate(90deg)}
+.sbot-fab.open .ico-close{opacity:1;transform:rotate(0deg)}
+
+/* pulse ring */
+.sbot-fab::after{
+  content:'';position:absolute;inset:-4px;border-radius:50%;
+  border:2px solid rgba(0,212,184,.5);
+  animation:sbot-pulse 2.2s ease-out infinite;
+}
+@keyframes sbot-pulse{
+  0%{opacity:.8;transform:scale(1)}
+  70%{opacity:0;transform:scale(1.5)}
+  100%{opacity:0;transform:scale(1.5)}
+}
+
+/* unread badge */
+.sbot-badge{
+  position:absolute;top:-2px;right:-2px;
+  width:16px;height:16px;border-radius:50%;
+  background:#ff5a6e;border:2px solid var(--bg);
+  font-size:9px;font-weight:700;color:#fff;
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;transform:scale(0);transition:all .2s;
+}
+.sbot-badge.show{opacity:1;transform:scale(1)}
+
+/* ── Panel ── */
+.sbot-panel{
+  position:fixed;bottom:94px;right:28px;z-index:8999;
+  width:360px;height:520px;
+  background:var(--surface);
+  border:1px solid var(--borderh);
+  border-radius:18px;
+  box-shadow:0 8px 48px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.05);
+  display:flex;flex-direction:column;overflow:hidden;
+  transform-origin:bottom right;
+  transform:scale(.85) translateY(16px);
+  opacity:0;pointer-events:none;
+  transition:transform .25s cubic-bezier(.34,1.3,.64,1),opacity .2s;
+}
+.sbot-panel.open{transform:scale(1) translateY(0);opacity:1;pointer-events:all}
+
+/* ── Header ── */
+.sbot-head{
+  display:flex;align-items:center;gap:10px;
+  padding:14px 16px 12px;
+  border-bottom:1px solid var(--border);
+  background:var(--bg2);flex-shrink:0;
+}
+.sbot-avatar{
+  width:34px;height:34px;border-radius:50%;flex-shrink:0;
+  background:linear-gradient(135deg,#00b09a,#00d4b8);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--fh);font-size:13px;font-weight:700;color:#080d14;
+  box-shadow:0 2px 10px rgba(0,212,184,.3);
+}
+.sbot-head-info{flex:1;min-width:0}
+.sbot-head-name{font-size:13px;font-weight:700;color:var(--txt)}
+.sbot-head-status{font-size:10px;color:var(--txm);display:flex;align-items:center;gap:4px;margin-top:1px}
+.sbot-dot{width:6px;height:6px;border-radius:50%;background:var(--pos);flex-shrink:0}
+.sbot-dot.loading{background:var(--neu);animation:sbot-blink .8s step-start infinite}
+@keyframes sbot-blink{50%{opacity:.2}}
+.sbot-head-close{
+  background:none;border:none;color:var(--txl);cursor:pointer;
+  padding:4px;border-radius:6px;transition:color .15s,background .15s;
+  display:flex;align-items:center;
+}
+.sbot-head-close:hover{color:var(--txt);background:var(--sf2)}
+
+/* ── Messages area ── */
+.sbot-msgs{
+  flex:1;overflow-y:auto;padding:14px 14px 4px;
+  display:flex;flex-direction:column;gap:10px;
+  scroll-behavior:smooth;
+}
+.sbot-msgs::-webkit-scrollbar{width:3px}
+.sbot-msgs::-webkit-scrollbar-thumb{background:var(--sf2)}
+
+/* ── Message bubbles ── */
+.sbot-msg{display:flex;gap:8px;animation:sbot-msgIn .2s ease-out}
+@keyframes sbot-msgIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.sbot-msg.user{flex-direction:row-reverse}
+
+.sbot-msg-av{
+  width:26px;height:26px;border-radius:50%;flex-shrink:0;margin-top:2px;
+  background:linear-gradient(135deg,#00b09a,#00d4b8);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--fh);font-size:10px;font-weight:700;color:#080d14;
+}
+.sbot-msg.user .sbot-msg-av{background:var(--sf2);color:var(--txm)}
+
+.sbot-bubble{
+  max-width:74%;padding:9px 13px;border-radius:14px;
+  font-size:12.5px;line-height:1.55;color:var(--txt);
+  background:var(--bg2);border:1px solid var(--border);
+}
+.sbot-msg.user .sbot-bubble{
+  background:linear-gradient(135deg,rgba(0,176,154,.3),rgba(0,212,184,.22));
+  border-color:rgba(0,212,184,.2);
+  border-bottom-right-radius:4px;
+}
+.sbot-msg.bot .sbot-bubble{border-bottom-left-radius:4px}
+
+/* ── Typing indicator ── */
+.sbot-typing .sbot-bubble{padding:11px 16px;display:flex;gap:4px;align-items:center}
+.sbot-typing-dot{
+  width:6px;height:6px;border-radius:50%;background:var(--txm);
+  animation:sbot-typing 1.2s ease-in-out infinite;
+}
+.sbot-typing-dot:nth-child(2){animation-delay:.2s}
+.sbot-typing-dot:nth-child(3){animation-delay:.4s}
+@keyframes sbot-typing{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-5px)}}
+
+/* ── Quick replies ── */
+.sbot-chips{
+  display:flex;flex-wrap:wrap;gap:5px;
+  padding:0 14px 8px;flex-shrink:0;
+}
+.sbot-chip{
+  font-size:11px;font-weight:600;color:var(--teal);
+  background:var(--teal-bg);border:1px solid rgba(0,212,184,.2);
+  border-radius:99px;padding:4px 11px;cursor:pointer;
+  transition:all .15s;white-space:nowrap;
+}
+.sbot-chip:hover{background:rgba(0,212,184,.18);border-color:rgba(0,212,184,.4)}
+
+/* ── Input area ── */
+.sbot-foot{
+  border-top:1px solid var(--border);padding:10px 12px;
+  display:flex;gap:8px;align-items:center;flex-shrink:0;
+  background:var(--bg2);
+}
+.sbot-input{
+  flex:1;background:var(--sf2);border:1px solid var(--border);
+  border-radius:99px;padding:8px 14px;
+  font-size:12.5px;font-family:var(--fb);color:var(--txt);outline:none;
+  transition:border-color .2s;
+}
+.sbot-input::placeholder{color:var(--txl)}
+.sbot-input:focus{border-color:rgba(0,212,184,.3)}
+.sbot-send{
+  width:34px;height:34px;border-radius:50%;border:none;cursor:pointer;
+  background:linear-gradient(135deg,#00b09a,#00d4b8);
+  color:#080d14;display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;transition:all .2s;
+}
+.sbot-send:hover{transform:scale(1.08);box-shadow:0 2px 12px rgba(0,212,184,.4)}
+.sbot-send:disabled{opacity:.35;cursor:not-allowed;transform:none}
+
+@media(max-width:480px){
+  .sbot-panel{right:10px;left:10px;width:auto;bottom:80px}
+  .sbot-fab{bottom:18px;right:18px}
+}
 </style>
 </head>
 <body>
@@ -1772,6 +1945,350 @@ function toggleTheme() {
   if (b) b.textContent = saved==='light' ? '☀️' : '🌙';
 })();
 
+/* ══════════════════════════════════════════════════════════
+   SIAP BOT — nlp.js chatbot (lazy-loaded dari CDN)
+   ══════════════════════════════════════════════════════════ */
+const SBOT = (() => {
+  let nlpReady = false, manager = null, panelOpen = false;
+
+  /* ── Intents & training data ── */
+  const TRAINING = [
+    // greeting
+    { intent:'greeting', lang:'id', docs:['halo','hai','hi','selamat pagi','selamat siang','selamat malam','hey','hei','apa kabar','assalamualaikum'] },
+    // farewell
+    { intent:'farewell', lang:'id', docs:['bye','dadah','sampai jumpa','terima kasih','makasih','thanks','selesai','keluar'] },
+    // help
+    { intent:'help', lang:'id', docs:['bantuan','help','apa yang bisa kamu lakukan','fitur apa saja','bisa apa','kemampuan kamu','cara pakai','panduan'] },
+    // about
+    { intent:'about', lang:'id', docs:['apa itu siap analytics','tentang aplikasi','siap analytics itu apa','tentang sistem ini','jelaskan aplikasi ini','apa ini'] },
+    // search
+    { intent:'search', lang:'id', docs:['cari','analisis','sentimen tentang','cek sentimen','analisa kata kunci','mulai analisis','lacak kata kunci','pantau'] },
+    // nav back
+    { intent:'nav.search', lang:'id', docs:['kembali ke pencarian','pencarian baru','halaman awal','reset','mulai ulang','back','kembali'] },
+    // results
+    { intent:'results.ask', lang:'id', docs:['bagaimana hasilnya','lihat hasil','hasil analisis','sentimen apa','berapa persen positif','tampilkan hasil','statistik sentimen','ringkasan hasil'] },
+    // export csv
+    { intent:'export.csv', lang:'id', docs:['export csv','download data','unduh csv','ekspor data','simpan data','download mentions'] },
+    // export pdf
+    { intent:'export.pdf', lang:'id', docs:['export pdf','unduh laporan','cetak laporan','download pdf','buat laporan'] },
+    // theme
+    { intent:'theme', lang:'id', docs:['ganti tema','dark mode','light mode','mode gelap','mode terang','ubah tema','switch theme'] },
+    // explain sentiment
+    { intent:'explain.sentiment', lang:'id', docs:['apa itu sentimen','jelaskan sentimen','bagaimana analisis sentimen bekerja','sentimen itu apa','makna sentimen'] },
+    // explain indoiert
+    { intent:'explain.model', lang:'id', docs:['apa itu indoBERT','bagaimana model bekerja','model NLP','cara kerja AI','teknologi yang dipakai','machine learning sentimen'] },
+    // keyword suggestion
+    { intent:'suggest.keyword', lang:'id', docs:['contoh kata kunci','kata kunci apa','rekomendasi topik','topik populer','ide pencarian'] },
+  ];
+
+  /* ── Answers (array → picked randomly) ── */
+  const ANSWERS = {
+    greeting: [
+      'Halo! Saya SIAP Bot, asisten analisis sentimen Anda. Ada yang bisa saya bantu? 👋',
+      'Hai! Siap membantu Anda menganalisis sentimen publik. Ketik **bantuan** untuk melihat fitur saya.',
+    ],
+    farewell: [
+      'Sampai jumpa! Semoga analisis sentimennya bermanfaat. 👋',
+      'Terima kasih sudah menggunakan SIAP Analytics. Sampai jumpa!',
+    ],
+    help: [
+      `Saya bisa membantu Anda dengan:\n\n• **Cari** — mulai analisis kata kunci baru\n• **Lihat hasil** — ringkasan hasil analisis\n• **Export CSV / PDF** — unduh data\n• **Ganti tema** — dark/light mode\n• **Jelaskan** — cara kerja IndoBERT & sentimen\n\nCoba ketik salah satu di atas!`,
+    ],
+    about: [
+      'SIAP Analytics adalah dashboard analisis sentimen publik berbasis **IndoBERT** — model NLP bahasa Indonesia dari HuggingFace. Data diambil dari Twitter/X, media online, dan Instagram, lalu diklasifikasikan menjadi Positif, Netral, atau Negatif.',
+    ],
+    'nav.search': [
+      'Baik, kembali ke halaman pencarian!',
+    ],
+    'export.csv': [
+      'Mengunduh data CSV sekarang...',
+    ],
+    'export.pdf': [
+      'Menyiapkan laporan PDF...',
+    ],
+    theme: [
+      'Mengubah tema tampilan!',
+    ],
+    'explain.sentiment': [
+      'Analisis sentimen adalah proses menentukan apakah sebuah teks mengungkapkan opini **positif**, **negatif**, atau **netral**. SIAP Analytics menggunakan IndoBERT yang sudah fine-tuned khusus untuk teks Bahasa Indonesia.',
+    ],
+    'explain.model': [
+      'IndoBERT adalah model **BERT** yang telah di-pretrain pada korpus Bahasa Indonesia dan fine-tuned untuk klasifikasi sentimen 3 kelas. Model ini diakses via library `transformers` dari HuggingFace dan dijalankan di server Flask lokal.',
+    ],
+    'suggest.keyword': [
+      'Beberapa topik populer untuk dianalisis:\n\n• **PPKM** — kebijakan pembatasan kegiatan\n• **Prabowo** — opini tentang presiden\n• **Harga BBM** — reaksi kenaikan harga\n• **KPK** — persepsi anti-korupsi\n• **BPJS** — layanan kesehatan',
+    ],
+    'results.ask': null, // dynamic
+    search: null,        // dynamic
+    none: [
+      'Maaf, saya kurang paham. Coba ketik **bantuan** untuk melihat apa yang bisa saya lakukan.',
+      'Hmm, saya belum mengerti pertanyaan itu. Ketik **bantuan** ya!',
+    ],
+  };
+
+  /* ── Quick replies per intent ── */
+  const CHIPS = {
+    greeting:  ['Bantuan','Cari sentimen','Jelaskan IndoBERT'],
+    help:      ['Cari PPKM','Lihat hasil','Export CSV','Ganti tema'],
+    'results.ask': ['Export CSV','Export PDF','Cari baru'],
+    'explain.sentiment': ['Jelaskan IndoBERT','Lihat hasil','Bantuan'],
+    about:     ['Bantuan','Cari sentimen','Jelaskan model'],
+    none:      ['Bantuan','Cari sentimen','Lihat hasil'],
+  };
+
+  /* ── Render helpers ── */
+  function scrollBot() {
+    const el = document.getElementById('sbot-msgs');
+    if (el) el.scrollTop = el.scrollHeight;
+  }
+
+  function appendMsg(text, role) {
+    const wrap = document.getElementById('sbot-msgs');
+    const div = document.createElement('div');
+    div.className = `sbot-msg ${role}`;
+    const initial = role === 'bot' ? 'SB' : (window.APP_USER || 'U');
+    div.innerHTML = `
+      <div class="sbot-msg-av">${initial.substring(0,2).toUpperCase()}</div>
+      <div class="sbot-bubble">${mdLight(text)}</div>`;
+    wrap.appendChild(div);
+    scrollBot();
+    return div;
+  }
+
+  function mdLight(t) {
+    return t
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/`(.+?)`/g, '<code style="font-family:var(--fm);font-size:11px;background:var(--sf2);padding:1px 4px;border-radius:3px">$1</code>')
+      .replace(/\n/g, '<br>');
+  }
+
+  function showTyping() {
+    const wrap = document.getElementById('sbot-msgs');
+    const div = document.createElement('div');
+    div.className = 'sbot-msg bot sbot-typing';
+    div.id = 'sbot-typing';
+    div.innerHTML = `<div class="sbot-msg-av">SB</div>
+      <div class="sbot-bubble">
+        <span class="sbot-typing-dot"></span>
+        <span class="sbot-typing-dot"></span>
+        <span class="sbot-typing-dot"></span>
+      </div>`;
+    wrap.appendChild(div); scrollBot();
+  }
+
+  function removeTyping() {
+    const t = document.getElementById('sbot-typing');
+    if (t) t.remove();
+  }
+
+  function setChips(list) {
+    const el = document.getElementById('sbot-chips');
+    el.innerHTML = '';
+    if (!list || !list.length) return;
+    list.forEach(label => {
+      const btn = document.createElement('button');
+      btn.className = 'sbot-chip';
+      btn.textContent = label;
+      btn.onclick = () => processInput(label);
+      el.appendChild(btn);
+    });
+  }
+
+  function setStatus(ready) {
+    const dot = document.getElementById('sbot-status-dot');
+    const txt = document.getElementById('sbot-status-txt');
+    if (dot) dot.classList.toggle('loading', !ready);
+    if (txt) txt.textContent = ready ? 'Online · siap membantu' : 'Memuat model…';
+  }
+
+  function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+  /* ── Build dynamic results answer ── */
+  function resultsAnswer() {
+    const R = window.APP ? window.APP.results : null;
+    const screen = document.getElementById('screen-results');
+    const active = screen && screen.classList.contains('active');
+    if (!R || !active) return 'Belum ada hasil analisis. Silakan mulai pencarian dulu ya!';
+    const pos = R.pos || 0, neg = R.neg || 0, neu = R.neu || 0;
+    const dom = pos >= neg && pos >= neu ? `**Positif** (${pos.toFixed(1)}%)` : neg >= pos && neg >= neu ? `**Negatif** (${neg.toFixed(1)}%)` : `**Netral** (${neu.toFixed(1)}%)`;
+    return `Hasil analisis untuk **${(R.keywords||[]).join(' + ')}**:\n\n• Positif: **${pos.toFixed(1)}%**\n• Negatif: **${neg.toFixed(1)}%**\n• Netral: **${neu.toFixed(1)}%**\n\nSentimen dominan: ${dom}. Total data: **${R.total||0}** mention.`;
+  }
+
+  /* ── Aksi berdasarkan intent ── */
+  function executeAction(intent, originalText) {
+    if (intent === 'nav.search')    { setTimeout(goSearch, 400); }
+    if (intent === 'export.csv')    { setTimeout(() => { if (typeof exportMentionCSV === 'function') exportMentionCSV(); else showToast('Tidak ada data untuk diekspor','bad'); }, 400); }
+    if (intent === 'export.pdf')    { setTimeout(() => { if (typeof downloadPDF === 'function') downloadPDF(); else showToast('Tidak ada data PDF','bad'); }, 400); }
+    if (intent === 'theme')         { setTimeout(toggleTheme, 300); }
+    if (intent === 'results.ask')   { /* answer is dynamic */ }
+    if (intent === 'search') {
+      // Coba ekstrak kata kunci dari teks
+      const stopwords = ['cari','analisis','sentimen','tentang','cek','lacak','pantau','analisa'];
+      const kw = originalText.toLowerCase().split(/\s+/).filter(w => w.length > 2 && !stopwords.includes(w)).join(' ').trim();
+      if (kw) {
+        setTimeout(() => {
+          if (typeof addKeyword === 'function') {
+            addKeyword(kw);
+            goSearch();
+            showToast(`Kata kunci "${kw}" ditambahkan`, 'ok', 2500);
+          }
+        }, 500);
+      }
+    }
+  }
+
+  /* ── Process user message ── */
+  async function processInput(text) {
+    text = text.trim();
+    if (!text) return;
+    document.getElementById('sbot-input').value = '';
+    document.getElementById('sbot-chips').innerHTML = '';
+    appendMsg(text, 'user');
+
+    if (!nlpReady) {
+      showTyping();
+      await new Promise(r => setTimeout(r, 500));
+      removeTyping();
+      appendMsg('Model masih dimuat, sabar sebentar ya... ⏳', 'bot');
+      return;
+    }
+
+    showTyping();
+    await new Promise(r => setTimeout(r, 420 + Math.random() * 300));
+    removeTyping();
+
+    const result = await manager.process('id', text);
+    const intent = (result.intent && result.score > 0.35) ? result.intent : 'none';
+
+    let reply;
+    if (intent === 'results.ask') {
+      reply = resultsAnswer();
+    } else {
+      const pool = ANSWERS[intent] || ANSWERS.none;
+      reply = pick(pool);
+    }
+
+    appendMsg(reply, 'bot');
+    setChips(CHIPS[intent] || []);
+    executeAction(intent, text);
+
+    // Show unread badge kalau panel tertutup
+    if (!panelOpen) {
+      const b = document.getElementById('sbot-badge');
+      if (b) { b.textContent = '1'; b.classList.add('show'); }
+    }
+  }
+
+  /* ── Load nlp.js dari CDN (lazy) ── */
+  async function loadNlp() {
+    return new Promise((resolve) => {
+      const s = document.createElement('script');
+      s.src = 'https://unpkg.com/node-nlp@3/dist/bundle.js';
+      s.async = true;
+      s.onload = () => resolve(true);
+      s.onerror = () => resolve(false);
+      document.head.appendChild(s);
+    });
+  }
+
+  async function initNlp() {
+    const ok = await loadNlp();
+    if (!ok || typeof NlpManager === 'undefined') {
+      setStatus(false);
+      document.getElementById('sbot-status-txt').textContent = 'Mode terbatas (offline)';
+      nlpReady = true; // fallback: still respond with basic rules
+      manager = { process: async (_lang, text) => fallbackClassify(text) };
+      appendMsg('Model NLP tidak berhasil dimuat dari CDN. Saya berjalan dalam mode dasar. 🤖', 'bot');
+      setChips(CHIPS.greeting);
+      return;
+    }
+
+    manager = new NlpManager({ languages: ['id'], nlu: { useNoneFeature: true } });
+    TRAINING.forEach(({ intent, lang, docs }) => {
+      docs.forEach(d => manager.addDocument(lang, d, intent));
+    });
+    Object.entries(ANSWERS).forEach(([intent, arr]) => {
+      if (!arr) return;
+      arr.forEach(a => manager.addAnswer('id', intent, a));
+    });
+    await manager.train();
+    nlpReady = true;
+    setStatus(true);
+  }
+
+  /* ── Simple fallback classifier (regex-based) ── */
+  function fallbackClassify(text) {
+    const t = text.toLowerCase();
+    const rules = [
+      [/\b(halo|hai|hi|hey|selamat)\b/, 'greeting'],
+      [/\b(bye|dadah|terima kasih|makasih|sampai jumpa)\b/, 'farewell'],
+      [/\b(bantuan|help|bisa apa|fitur)\b/, 'help'],
+      [/\b(tentang|apa itu siap|aplikasi ini)\b/, 'about'],
+      [/\b(cari|analisis|sentimen tentang|cek)\b/, 'search'],
+      [/\b(kembali|pencarian baru|reset)\b/, 'nav.search'],
+      [/\b(hasil|lihat hasil|statistik|ringkasan)\b/, 'results.ask'],
+      [/\b(csv|download data|unduh data)\b/, 'export.csv'],
+      [/\b(pdf|laporan|cetak)\b/, 'export.pdf'],
+      [/\b(tema|dark|light|mode gelap|mode terang)\b/, 'theme'],
+      [/\b(indoBERT|model|machine learning|AI|cara kerja)\b/, 'explain.model'],
+      [/\b(sentimen itu|analisis sentimen bekerja|apa itu sentimen)\b/, 'explain.sentiment'],
+    ];
+    for (const [re, intent] of rules) {
+      if (re.test(t)) return { intent, score: 0.9 };
+    }
+    return { intent: 'none', score: 0 };
+  }
+
+  /* ── Toggle panel ── */
+  function toggle() {
+    panelOpen = !panelOpen;
+    document.getElementById('sbot-fab').classList.toggle('open', panelOpen);
+    document.getElementById('sbot-panel').classList.toggle('open', panelOpen);
+    if (panelOpen) {
+      const b = document.getElementById('sbot-badge');
+      if (b) b.classList.remove('show');
+      document.getElementById('sbot-input').focus();
+    }
+  }
+
+  /* ── Init on first open ── */
+  let initialized = false;
+  function open() {
+    if (!initialized) {
+      initialized = true;
+      // Welcome message
+      setTimeout(() => {
+        appendMsg('Halo! Saya **SIAP Bot**, asisten analisis sentimen Anda. 👋\n\nSedang memuat model NLP...', 'bot');
+        initNlp().then(() => {
+          if (nlpReady) {
+            appendMsg('Model siap! Saya bisa membantu pencarian, melihat hasil, export data, dan lainnya. Ketik **bantuan** untuk mulai.', 'bot');
+            setChips(CHIPS.greeting);
+          }
+        });
+      }, 150);
+    }
+  }
+
+  return { toggle, send: () => {
+    const inp = document.getElementById('sbot-input');
+    processInput(inp.value);
+  }, open };
+})();
+
+function sbotToggle() {
+  SBOT.toggle();
+  SBOT.open();
+}
+function sbotSend() { SBOT.send(); }
+
+// Show greeting badge after 3s to attract attention
+setTimeout(() => {
+  if (!document.getElementById('sbot-panel').classList.contains('open')) {
+    const b = document.getElementById('sbot-badge');
+    if (b) b.classList.add('show');
+  }
+}, 3000);
+
 /* ─── BorderGlow — proc-card: auto-rotate while loading + pointer tracker ─── */
 (function() {
   const card = document.querySelector('.proc-card');
@@ -2039,5 +2556,54 @@ function downloadPDF() {
   });
 }
 </script>
+
+<!-- ══ SIAP Bot ══ -->
+<button class="sbot-fab" id="sbot-fab" aria-label="Buka Asisten SIAP Bot" onclick="sbotToggle()">
+  <span class="sbot-badge" id="sbot-badge">1</span>
+  <svg class="ico-chat" width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+      d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+  </svg>
+  <svg class="ico-close" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
+  </svg>
+</button>
+
+<div class="sbot-panel" id="sbot-panel" role="dialog" aria-label="SIAP Bot">
+  <!-- Header -->
+  <div class="sbot-head">
+    <div class="sbot-avatar">SB</div>
+    <div class="sbot-head-info">
+      <div class="sbot-head-name">SIAP Bot</div>
+      <div class="sbot-head-status">
+        <span class="sbot-dot" id="sbot-status-dot"></span>
+        <span id="sbot-status-txt">Memuat model…</span>
+      </div>
+    </div>
+    <button class="sbot-head-close" onclick="sbotToggle()" aria-label="Tutup">
+      <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Messages -->
+  <div class="sbot-msgs" id="sbot-msgs"></div>
+
+  <!-- Quick reply chips -->
+  <div class="sbot-chips" id="sbot-chips"></div>
+
+  <!-- Input -->
+  <div class="sbot-foot">
+    <input class="sbot-input" id="sbot-input" type="text"
+      placeholder="Tanya sesuatu…" autocomplete="off"
+      onkeydown="if(event.key==='Enter')sbotSend()"/>
+    <button class="sbot-send" id="sbot-send" onclick="sbotSend()" aria-label="Kirim">
+      <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
+      </svg>
+    </button>
+  </div>
+</div>
 </body>
 </html>
