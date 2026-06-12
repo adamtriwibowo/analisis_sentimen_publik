@@ -23,7 +23,7 @@ from flask_login import (
 from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeout
 
 from auth import init_db, get_user_by_id, verify_user, create_user, delete_user, get_all_users, update_password
-from twitter_scraper import (
+from scrapers.twitter import (
     scrape_tweets,
     analyze_sentiment_batch,
     compute_siap_output,
@@ -34,7 +34,10 @@ from twitter_scraper import (
 app = Flask(__name__)
 app.secret_key = os.environ.get("SIAP_SECRET", secrets.token_hex(32))
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+BASE_DIR      = os.path.dirname(os.path.abspath(__file__))
+TEMPLATES_DIR = os.path.join(BASE_DIR, "templates")
+INSTANCE_DIR  = os.path.join(BASE_DIR, "instance")
+os.makedirs(INSTANCE_DIR, exist_ok=True)
 
 # ── Flask-Login ───────────────────────────────────────────────────────────────
 
@@ -57,7 +60,7 @@ _jobs: dict = {}
 def login_page():
     if current_user.is_authenticated:
         return redirect("/")
-    return send_file(os.path.join(BASE_DIR, "login.html"))
+    return send_file(os.path.join(TEMPLATES_DIR, "login.html"))
 
 
 @app.route("/auth/login", methods=["POST"])
@@ -91,7 +94,7 @@ def auth_logout():
 def admin_page():
     if not current_user.is_admin():
         return redirect("/")
-    return send_file(os.path.join(BASE_DIR, "admin.html"))
+    return send_file(os.path.join(TEMPLATES_DIR, "admin.html"))
 
 
 @app.route("/auth/users", methods=["GET"])
@@ -151,7 +154,7 @@ def change_password(uid):
 @app.route("/")
 @login_required
 def index():
-    return send_file(os.path.join(BASE_DIR, "sentimen_app.html"))
+    return send_file(os.path.join(TEMPLATES_DIR, "index.html"))
 
 
 # ── API: info pengguna saat ini ───────────────────────────────────────────────
@@ -268,7 +271,7 @@ def _run_twitter(keywords, volume, date_from, date_to):
     asyncio.set_event_loop(loop)
     try:
         from twscrape import API
-        api = API()
+        api = API(os.path.join(INSTANCE_DIR, "accounts.db"))
         return loop.run_until_complete(
             asyncio.wait_for(
                 scrape_tweets(api, keywords, volume, "id", date_from, date_to),

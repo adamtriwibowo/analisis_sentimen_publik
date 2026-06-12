@@ -9,15 +9,15 @@ CARA LOGIN (pilih salah satu):
      1. Login ke x.com di Chrome/Firefox
      2. Buka DevTools (F12) -> Application -> Cookies -> https://x.com
      3. Salin nilai cookie: auth_token  dan  ct0
-     4. Jalankan:
-        python twitter_scraper.py --add-cookies USERNAME AUTH_TOKEN CT0
+     4. Jalankan (dari root project):
+        python scrapers/twitter.py --add-cookies USERNAME AUTH_TOKEN CT0
 
   B. Via username/password (bisa gagal karena Cloudflare):
-     python twitter_scraper.py --add-account USERNAME PASSWORD EMAIL EMAIL_PASS
+     python scrapers/twitter.py --add-account USERNAME PASSWORD EMAIL EMAIL_PASS
 
 SCRAPING:
-  python twitter_scraper.py -k "BPJS Kesehatan" -m 500
-  python twitter_scraper.py -k "program MBG" "makan bergizi" -m 1000 --from 2025-05-01 --to 2025-05-30
+  python scrapers/twitter.py -k "BPJS Kesehatan" -m 500
+  python scrapers/twitter.py -k "program MBG" "makan bergizi" -m 1000 --from 2025-05-01 --to 2025-05-30
 """
 
 import asyncio
@@ -446,7 +446,9 @@ Contoh:
         print("ERROR: twscrape tidak terinstall. Jalankan: pip install twscrape")
         sys.exit(1)
 
-    api = API()
+    _project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    _accounts_db  = os.path.join(_project_root, "instance", "accounts.db")
+    api = API(_accounts_db)
 
     # ── Tampilkan daftar akun ─────────────────────────────────────────────
     if args.list_accounts:

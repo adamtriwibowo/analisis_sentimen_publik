@@ -27,7 +27,7 @@ try:
 except ImportError:
     HAS_INSTAGRAPI = False
 
-from twitter_scraper import clean_text
+from .twitter import clean_text
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 

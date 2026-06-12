@@ -26,7 +26,7 @@ try:
 except ImportError:
     HAS_REQUESTS = False
 
-from twitter_scraper import clean_text
+from .twitter import clean_text
 
 # ── Sumber berita yang dicoba ─────────────────────────────────────────────────
 

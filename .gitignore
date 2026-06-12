@@ -1,18 +1,22 @@
-# Kredensial & database akun Twitter
-accounts.db
+# ── Runtime / instance data (jangan di-commit) ──────────────────────────────
+instance/
+# (accounts.db & siap_users.db ada di instance/)
 
-# Database pengguna (berisi password hash — jangan di-commit)
-siap_users.db
-
-# Output scraping (data mentah)
+# ── Output scraping & dataset besar ─────────────────────────────────────────
+data/
 *.json
+*.zip
 
-# Python
+# ── Python ───────────────────────────────────────────────────────────────────
 __pycache__/
 *.pyc
 *.pyo
 .env
 
-# Cache HuggingFace / model
+# ── Cache HuggingFace / model weights ────────────────────────────────────────
 *.bin
 *.safetensors
+
+# ── File sementara / tidak relevan ───────────────────────────────────────────
+claude\ --resume\ *.txt
+test_*.json

@@ -6,7 +6,9 @@ import sqlite3
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 
-DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "siap_users.db")
+_BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_PATH   = os.path.join(_BASE_DIR, "instance", "siap_users.db")
+os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
 
 DEFAULT_USER = "admin"
 DEFAULT_PASS = "siap2025"
